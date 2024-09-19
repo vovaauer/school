@@ -1,4 +1,4 @@
 # compsci 30
 ## demos
-moving square
+[moving square](movingsquare)
 ## projects
