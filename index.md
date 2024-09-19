@@ -1,4 +1,6 @@
 # compsci 30
 ## demos
-[moving square](movingsquare)
+    [moving square](movingsquare)
+
 ## projects
+    [Interactive Scene](interactivescene)
