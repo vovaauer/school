@@ -5,15 +5,15 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
-let x = 225
-let y = 250
+let x = 250
+let y = 275
 let r = 200
 let tx = x
 let ty = y
 let tr = r
 
 function setup() {
-  createCanvas(windowWidth*0.95, windowHeight*0.95);
+  createCanvas(windowWidth, windowHeight);
   man = loadImage('man.webp');
   bg = loadImage('background.webp');
   console.log(x,y)
@@ -28,14 +28,15 @@ function draw() {
 }
 
 function mouseWheel() {
+  if (x<)
   if (event.delta > 0) {
-    tx+=0
-    ty+=0
+    tx+=-10
+    ty+=-5
     tr+=20
   }
   if (event.delta < 0) {
-    tx-=0
-    ty-=0
+    tx-=-10
+    ty-=-5
     tr-=20
   }
 }
