@@ -5,41 +5,48 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
-let x = 250
-let y = 275
-let r = 200
-let tx = x
-let ty = y
-let tr = r
+let x
+let y
+let r
+let tx
+let ty
+let tr
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   man = loadImage('man.webp');
   bg = loadImage('background.webp');
-  console.log(x,y)
+  r = height/3
+  x = width/2-r/1.35
+  y = height/2-r/6
+  tx = x
+  ty = y
+  tr = r
 }
 
 function draw() {
   background(bg);
-  x+=(tx-x)*0.1
-  y+=(ty-y)*0.1
-  r+=(tr-r)*0.1
+  x+=(tx-x)*0.02
+  y+=(ty-y)*0.02
+  r+=(tr-r)*0.02
   image(man,x,y,r*1.5,r);
 }
 
 function mouseWheel() {
-  if (x<)
-  if (event.delta > 0) {
-    tx+=-10
-    ty+=-5
-    tr+=20
-  }
+if (true) {
   if (event.delta < 0) {
-    tx-=-10
-    ty-=-5
-    tr-=20
+    tx-=-width/17.5
+    ty-=-width/50
+    tr-=width/10
   }
 }
+if (event.delta > 0) {
+  tx+=-width/17.5
+  ty+=-width/50
+  tr+=width/10
+  }
+}
+
 
 function characterAction() {
   
