@@ -11,6 +11,12 @@ let r
 let tx
 let ty
 let tr
+let music
+
+function preload(){
+  music = loadSound("music.mp3")
+  
+}
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -22,7 +28,8 @@ function setup() {
   tx = x
   ty = y
   tr = r
-  music = loadSound()
+  music.play();
+  music.rate(0)
 }
 
 function draw() {
@@ -30,6 +37,7 @@ function draw() {
   x+=(tx-x)*0.07
   y+=(ty-y)*0.07
   r+=(tr-r)*0.07
+  music.rate((tr-r)/100)
   image(man,x,y,r*1.5,r);
   if (keyIsDown(UP_ARROW)) {
     if (tr>height/3) {
@@ -45,7 +53,7 @@ function draw() {
   }
 }
 
-function mouseWheel() {
+function mouseWheel(event) {
   if (tr>height/3) {
     if (event.delta < 0) {
       tx-=-width/17.5
