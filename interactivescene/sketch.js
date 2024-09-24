@@ -63,14 +63,14 @@ function draw() {
 function mouseWheel(event) {
   if (tr>height/3) {
     if (event.delta < 0) {
-      tplace-=1
+      tplace-=10
       tx-=-width/17.5
       ty-=-width/50
       tr-=width/10
     }
   }
   if (event.delta > 0) {
-    tplace+=1
+    tplace+=10
     tx+=-width/17.5
     ty+=-width/50
     tr+=width/10
