@@ -14,6 +14,7 @@ let tr;
 let music;
 let place;
 let tplace;
+let ttplace;
 let bg;
 let man;
 
@@ -33,17 +34,23 @@ function setup() {
   ty = y;
   tr = r;
   tplace = 0;
+  ttplace = 0;
   music.play();
   music.rate(0);
 }
 
+function start() {
+  
+}
+
 function draw() {
   background(bg);
-  x+=(tx-x)*0.07;
-  y+=(ty-y)*0.07;
-  r+=(tr-r)*0.07;
-  place+=(tplace-place)*0.1;
-  music.rate((tplace-place)/10);
+  x+=(tx-x)*0.04;
+  y+=(ty-y)*0.04;
+  r+=(tr-r)*0.04;
+  place+=(tplace-place)*0.02;
+  tplace+=(ttplace-tplace)*0.02;
+  music.rate((tplace-place)/50);
   image(man,x,y,r*1.5,r);
   if (keyIsDown(UP_ARROW)) {
     if (tr>height/3) {
@@ -55,26 +62,29 @@ function draw() {
   }
   if (keyIsDown(DOWN_ARROW)) {
     tplace+=1;
-    tx+=-width/17.5/400*r/100;
-    ty+=-width/50/400*r/100;
-    tr+=width/10/400*r/100;
+    tx+=-width/17.5/600*r/100;
+    ty+=-width/50/600*r/100;
+    tr+=width/10/600*r/100;
+  }
+  if (!music.isPlaying) {
+    music.play();
   }
 }
 
 function mouseWheel(event) {
   if (tr>height/3) {
     if (event.delta < 0) {
-      tplace-=20;
-      tx-=-width/17.5;
-      ty-=-width/50;
-      tr-=width/10;
+      ttplace-=20;
+      tx+=width/17.5/600*r/5;
+      ty+=width/50/600*r/5;
+      tr+=-width/10/600*r/5;
     }
   }
   if (event.delta > 0) {
-    tplace+=20;
-    tx+=-width/17.5;
-    ty+=-width/50;
-    tr+=width/10;
+    ttplace+=20;
+    tx-=width/17.5/600*r/5;
+    ty-=width/50/600*r/5;
+    tr-=-width/10/600*r/5;
   }
 }
 
