@@ -47,9 +47,9 @@ function draw() {
   if (keyIsDown(UP_ARROW)) {
     if (tr>height/3) {
       tplace-=1
-      tx-=-width/17.5/400*r/100
-      ty-=-width/50/400*r/100
-      tr-=width/10/400*r/100
+      tx-=-width/17.5/600*r/100
+      ty-=-width/50/600*r/100
+      tr-=width/10/600*r/100
     }
   }
   if (keyIsDown(DOWN_ARROW)) {
@@ -63,14 +63,14 @@ function draw() {
 function mouseWheel(event) {
   if (tr>height/3) {
     if (event.delta < 0) {
-      tplace-=10
+      tplace-=20
       tx-=-width/17.5
       ty-=-width/50
       tr-=width/10
     }
   }
   if (event.delta > 0) {
-    tplace+=10
+    tplace+=20
     tx+=-width/17.5
     ty+=-width/50
     tr+=width/10
