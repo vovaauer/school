@@ -17,6 +17,10 @@ let tplace;
 let ttplace;
 let bg;
 let man;
+let started = false;
+let startbg;
+let frozen = false;
+let playspeed;
 
 function preload(){
   music = loadSound("music.mp3");
@@ -26,6 +30,7 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   man = loadImage("man.webp");
   bg = loadImage("background.webp");
+  startbg = loadImage("startbg.png");
   r = height/3;
   x = width/2-r/1.35;
   y = height/2-r/6;
@@ -35,61 +40,69 @@ function setup() {
   tr = r;
   tplace = 0;
   ttplace = 0;
-  music.play();
-  music.rate(0);
 }
 
-function start() {
-  
+function mouseClicked() {
+  started = true;
+  music.loop();
+  music.rate(0);
 }
 
 function draw() {
   background(bg);
+  if (!started) {
+    background(startbg);
+  }
   x+=(tx-x)*0.04;
   y+=(ty-y)*0.04;
   r+=(tr-r)*0.04;
   place+=(tplace-place)*0.02;
   tplace+=(ttplace-tplace)*0.02;
-  music.rate((tplace-place)/50);
-  image(man,x,y,r*1.5,r);
-  if (keyIsDown(UP_ARROW)) {
-    if (tr>height/3) {
-      tplace-=1;
-      tx-=-width/17.5/600*r/100;
-      ty-=-width/50/600*r/100;
-      tr-=width/10/600*r/100;
+  if (!frozen) {
+    playspeed = (tplace-place)/50;
+  }
+  music.rate(playspeed);
+  if (started){
+    image(man,x,y,r*1.5,r);
+    if (keyIsDown(UP_ARROW)) {
+      if (tr>height/3) {
+        place+=1;
+        tx-=-width/17.5/600*r/100;
+        ty-=-width/50/600*r/100;
+        tr-=width/10/600*r/100;
+      }
     }
-  }
-  if (keyIsDown(DOWN_ARROW)) {
-    tplace+=1;
-    tx+=-width/17.5/600*r/100;
-    ty+=-width/50/600*r/100;
-    tr+=width/10/600*r/100;
-  }
-  if (!music.isPlaying) {
-    music.play();
+    if (keyIsDown(DOWN_ARROW)) {
+      place-=1;
+      tx+=-width/17.5/600*r/100;
+      ty+=-width/50/600*r/100;
+      tr+=width/
+      10/600*r/100;
+    }
   }
 }
 
 function mouseWheel(event) {
-  if (tr>height/3) {
-    if (event.delta < 0) {
-      ttplace-=20;
-      tx+=width/17.5/600*r/5;
-      ty+=width/50/600*r/5;
-      tr+=-width/10/600*r/5;
+  if (started){
+    if (tr>height/3) {
+      if (event.delta < 0) {
+        ttplace-=20;
+        tx+=width/17.5/600*r/5;
+        ty+=width/50/600*r/5;
+        tr+=-width/10/600*r/5;
+      }
+    }
+    if (event.delta > 0) {
+      ttplace+=20;
+      tx-=width/17.5/600*r/5;
+      ty-=width/50/600*r/5;
+      tr-=-width/10/600*r/5;
     }
   }
-  if (event.delta > 0) {
-    ttplace+=20;
-    tx-=width/17.5/600*r/5;
-    ty-=width/50/600*r/5;
-    tr-=-width/10/600*r/5;
+}
+
+function keyPressed (event){
+  if (key === " ") {
+    frozen = !frozen;
   }
 }
-
-
-function characterAction() {
-  
-}
-
