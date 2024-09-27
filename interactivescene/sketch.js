@@ -1,9 +1,10 @@
-// Project Title
-// Your Name
-// Date
+// Virtual Insanity Interactive Scene
+// Albert Auer
+// October 1, 2024
 //
 // Extra for Experts:
-// - describe what you did to take this project "above and beyond"
+// - using the mouse wheel as input
+// - uses p5.sound to play music, and change the rate
 
 let x;
 let y;
@@ -22,11 +23,12 @@ let startbg;
 let frozen = false;
 let playspeed;
 
-function preload(){
+function preload() {
   music = loadSound("music.mp3");
 }
 
 function setup() {
+  music = loadSound("music.mp3");
   createCanvas(windowWidth, windowHeight);
   man = loadImage("man.webp");
   bg = loadImage("background.webp");
@@ -34,54 +36,20 @@ function setup() {
   r = height/3;
   x = width/2-r/1.35;
   y = height/2-r/6;
-  place = 0;
   tx = x;
   ty = y;
   tr = r;
-  tplace = 0;
-  ttplace = 0;
-}
-
-function mouseClicked() {
-  started = true;
-  music.loop();
-  music.rate(0);
 }
 
 function draw() {
-  background(bg);
-  if (!started) {
-    background(startbg);
-  }
-  x+=(tx-x)*0.04;
-  y+=(ty-y)*0.04;
-  r+=(tr-r)*0.04;
-  place+=(tplace-place)*0.02;
-  tplace+=(ttplace-tplace)*0.02;
-  if (!frozen) {
-    playspeed = (tplace-place)/50;
-  }
-  music.rate(playspeed);
-  if (started){
-    image(man,x,y,r*1.5,r);
-    if (keyIsDown(UP_ARROW)) {
-      if (tr>height/3) {
-        place+=1;
-        tx-=-width/17.5/600*r/100;
-        ty-=-width/50/600*r/100;
-        tr-=width/10/600*r/100;
-      }
-    }
-    if (keyIsDown(DOWN_ARROW)) {
-      place-=1;
-      tx+=-width/17.5/600*r/100;
-      ty+=-width/50/600*r/100;
-      tr+=width/
-      10/600*r/100;
-    }
-  }
+  musicRate();
+  displayImages();
+  smoothVariableChange();
+  arrowKeySlider();
+  musicRate();
 }
 
+// Use the scroll wheel to move the man and change the music speed
 function mouseWheel(event) {
   if (started){
     if (tr>height/3) {
@@ -101,8 +69,65 @@ function mouseWheel(event) {
   }
 }
 
+// Start the scene
+function mouseClicked() {
+  started = true;
+  music.loop();
+  music.rate(0);
+}
+
+// Display the man, background, and start screen
+function displayImages() {
+  background(bg);
+  if (started) {
+    image(man,x,y,r*1.5,r);
+  }
+  else {
+    background(startbg);
+  }
+}
+
+// Change the variables so the scrolling and music speed changes are gradual
+function smoothVariableChange() {
+  x+=(tx-x)*0.04;
+  y+=(ty-y)*0.04;
+  r+=(tr-r)*0.04;
+  place+=(tplace-place)*0.02;
+  tplace+=(ttplace-tplace)*0.02;
+}
+
+// Use the up and down arrow keys to move the man and change the music speed
+function arrowKeySlider() {
+  if (started){
+    if (keyIsDown(UP_ARROW)) {
+      if (tr>height/3) {
+        place+=1;
+        tx-=-width/17.5/600*r/100;
+        ty-=-width/50/600*r/100;
+        tr-=width/10/600*r/100;
+      }
+    }
+    if (keyIsDown(DOWN_ARROW)) {
+      place-=1;
+      tx+=-width/17.5/600*r/100;
+      ty+=-width/50/600*r/100;
+      tr+=width/
+      10/600*r/100;
+    }
+  }
+}
+
+// Freeze the music when space is pressed
 function keyPressed (event){
   if (key === " ") {
     frozen = !frozen;
   }
+}
+
+// Change the speed of the music, unless the speed is frozen, and 
+function musicRate() {
+  if (!frozen) {
+    playspeed = (tplace-place)/50;
+  }
+  music.rate(playspeed);
 }
