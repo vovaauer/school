@@ -4,8 +4,9 @@
 //
 // Extra for Experts:
 // - using the mouse wheel as input
-// - uses p5.sound to play music, and change the rate
+// - uses p5.sound to play music rate
 
+// Setting all variables
 let x;
 let y;
 let r;
@@ -13,20 +14,22 @@ let tx;
 let ty;
 let tr;
 let music;
-let place;
-let tplace;
-let ttplace;
+let place = 0;
+let tplace = 0;
+let ttplace = 0;
 let bg;
 let man;
 let started = false;
 let startbg;
 let frozen = false;
-let playspeed;
+let playspeed = 0;
 
+// Load the music
 function preload() {
   music = loadSound("music.mp3");
 }
 
+// Set additional variables, and create the canvas
 function setup() {
   music = loadSound("music.mp3");
   createCanvas(windowWidth, windowHeight);
@@ -41,12 +44,14 @@ function setup() {
   tr = r;
 }
 
+// Draw loop links to functions
 function draw() {
-  musicRate();
   displayImages();
-  smoothVariableChange();
-  arrowKeySlider();
-  musicRate();
+  if (started) {
+    musicRate();
+    arrowKeySlider();
+    smoothVariableChange();
+  }
 }
 
 // Use the scroll wheel to move the man and change the music speed
@@ -71,9 +76,11 @@ function mouseWheel(event) {
 
 // Start the scene
 function mouseClicked() {
-  started = true;
-  music.loop();
-  music.rate(0);
+  if (!started){
+    started = true;
+    music.loop();
+    music.rate(0);
+  }
 }
 
 // Display the man, background, and start screen
@@ -127,7 +134,7 @@ function keyPressed (event){
 // Change the speed of the music, unless the speed is frozen, and 
 function musicRate() {
   if (!frozen) {
-    playspeed = (tplace-place)/50;
+    playspeed = (tplace-place)/50;  
   }
   music.rate(playspeed);
 }
