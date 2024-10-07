@@ -5,6 +5,7 @@
 - [traffic light](traffic-light)
 - [bouncing-balls](bouncing-balls)
 - [generative-art](art)
+- [perlin-noise-ball](perlin)
 
 ## projects
 - [Interactive Scene](interactivescene)
