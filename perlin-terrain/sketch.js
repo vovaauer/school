@@ -13,7 +13,7 @@ function setup() {
 function draw() {
   background(255);
   noStroke();
-  fill(noise(),noise(),noise())
+  fill(noise(),noise(),noise());
   for (let someRect of terrain){
     rect(someRect.x,someRect.y,someRect.w,someRect.h);
   }
