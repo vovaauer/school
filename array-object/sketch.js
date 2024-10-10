@@ -6,15 +6,15 @@
 // - describe what you did to take this project "above and beyond"
 
 let playerid;
-let players = [];
+let players;
 let player;
 
 function preload() {
   // connect to a p5party server
   partyConnect("wss://demoserver.p5party.org", "albert");
-  
-  // tell p5.party to sync the pos object
-  player = partyLoadShared("player", player);
+  shared = partyLoadShared("main");
+  players = partyLoadGuestShareds();
+  me = partyLoadMyShared();
 }
 
 function setup() {
