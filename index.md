@@ -3,10 +3,11 @@
 - [moving square](movingsquare)
 - [image demo](image-demo)
 - [traffic light](traffic-light)
-- [bouncing-balls](bouncing-balls)
-- [generative-art](art)
-- [perlin-noise-ball](perlin)
-- [perlin-terrain-generation](perlin-terrain)
+- [bouncing balls](bouncing-balls)
+- [generative art](art)
+- [perlin noise ball](perlin)
+- [perlin terrain generation](perlin-terrain)
+- [bubble-object-demo](bubble-object-demo)
 
 ## projects
 - [Interactive Scene](interactivescene)
