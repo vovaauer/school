@@ -12,7 +12,7 @@ function setup() {
 }
 
 function draw() {
-  background(220);
+  background("black");
 
   for (let someBall of ballArray) {
     // move the ball
