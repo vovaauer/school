@@ -7,11 +7,11 @@
 // 
 // Circle code from circle demo
 
+let playerid;
 let players;
 let player;
 let guests;
 let obstacles;
-let difficulty = 0;
 
 let ballArray = [];
 
@@ -26,34 +26,35 @@ function preload() {
 }
 
 function setup() {
+  playerid = Math.floor(Math.random() * 100);
   createCanvas(windowWidth, windowHeight);
 }
 
 function draw() {
+  spawnBall();
   background(0);
-  for (let i = 0; i < guests.length; i++) {
-    const p = guests[i];
-    if (!(me === p)) {
-      image(cursor,p.x,p.y,34,34);
-    }
-  }
   me.x = mouseX;
   me.y = mouseY;
   for (let someBall of ballArray) {
     // move the ball
     someBall.x+=someBall.dx;
     someBall.y+=someBall.dy;
+    if (someBall.y>height || someBall.x>width || someBall.y<0 || someBall.x<0) {
+      ballArray.splice(ballArray.indexOf(someBall),1);
+    }
+  }
+  for (let someBall of ballArray) {
     // display the ball
     noStroke();
     fill(someBall.red,someBall.green,someBall.blue,someBall.alpha);
     circle(someBall.x,someBall.y,someBall.radius*2);
   }
-  if (partyIsHost()) {
-    difficulty+=1;
-    if (difficulty%10 === 0) {
-      spawnBall();
+  for (let i = 0; i < guests.length; i++) {
+    const p = guests[i];
+    if (!(me === p)) {
+      image(cursor,p.x,p.y,34,34);
     }
-  }
+  } 
 }
 
 function mouseClicked() {
@@ -62,15 +63,15 @@ function mouseClicked() {
 
 function spawnBall() {
   let theBall = {
-    x: 0-100,
+    x: 0,
     y: random(0,height),
     radius: random(30,70),
     dx: random(+1,+5),
-    dy: random(-1,+1),
-    red: random(63,255),
-    green: random(63,255),
-    blue: random(63,255),
-    alpha: random(63,255),
+    dy: random(-5,+5),
+    red: random(0,255),
+    green: random(0,255),
+    blue: random(0,255),
+    alpha: random(0,255),
   };
   ballArray.push(theBall);
 }

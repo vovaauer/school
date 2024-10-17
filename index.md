@@ -8,6 +8,7 @@
 - [perlin noise ball](perlin)
 - [perlin terrain generation](perlin-terrain)
 - [bubble-object-demo](bubble-object-demo)
+- [ten-rotate](ten-rotate)
 
 ## projects
 - [Interactive Scene](interactivescene)
