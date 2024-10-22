@@ -7,8 +7,9 @@
 - [generative art](art)
 - [perlin noise ball](perlin)
 - [perlin terrain generation](perlin-terrain)
-- [bubble-object-demo](bubble-object-demo)
-- [ten-rotate](ten-rotate)
+- [bubble object demo](bubble-object-demo)
+- [ten rotate](ten-rotate)
+- [grid demo](grid-demo)
 
 ## projects
 - [Interactive Scene](interactivescene)
