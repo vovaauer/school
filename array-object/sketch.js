@@ -1,40 +1,43 @@
 // Arrays and Object Notation Assignment
-// Your Name
-// Date
+// Albert Auer
+// 10/21/2024
 //
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
-// 
+// p5.party multilplayer
+//
 // Circle code from circle demo
 
 let playerid;
-let players;
-let player;
 let guests;
 let shared;
-
-let ballArray = [];
-let graveArray = [];
+let cursor;
 
 function preload() {
   // connect to a p5party server
-  partyConnect("wss://demoserver.p5party.org", "albert");
+  partyConnect("wss://demoserver.p5party.org", "albertau");
   shared = partyLoadShared("main");
   guests = partyLoadGuestShareds();
   me = partyLoadMyShared();
-  cursor = loadImage('cursor.svg');
+  cursor = loadImage('cursor.svg')
 }
 
 function setup() {
-  playerid = Math.floor(Math.random() * 100);
-  createCanvas(windowWidth, windowHeight);
-  me.alive = true;
   if (partyIsHost()) {
+    // setup variables as host
+    shared.width = windowWidth
+    shared.height = windowHeight
     shared.objects = [];
+    shared.graves = []
+    shared.difficulty = 1;
   }
+  // setup as guest and host
+  createCanvas(shared.width, shared.height);
+  me.alive = true;
 }
 
 function draw() {
+  // draw loop to run functions
   background(0);
   spawnBalls();
   playerLogic();
@@ -42,12 +45,43 @@ function draw() {
   moveBalls();
   displayBalls();
   displayGraves();
+  displayDeathScreen();
+}
+
+function displayDeathScreen() {
+  // displays death screen if player is dead
+  if (!me.alive) {
+    textAlign(CENTER, TOP);
+    fill(255, 0, 0);
+    textSize(32);
+    text("You died, you will respawn when everyone else dies", width / 2, 50);
+  }
 }
 
 function playerLogic() {
+  // sets player's x and y coordinates
   me.x = mouseX;
   me.y = mouseY;
-  deadPlayers = 0;
+  // host logic
+  if (partyIsHost()) {
+    // reset logic, if everyone is dead
+    let allDead = true;
+    for (let guest of guests) {
+      if (guest.alive) {
+        allDead = false;
+        break;
+      }
+    }
+    if (allDead) {
+      shared.difficulty = 1
+      shared.objects = []
+      shared.graves = []
+      for (let i = 0; i < guests.length; i++) {
+        const p = guests[i];
+        p.alive = true
+      }
+    }
+  }
   for (let i = 0; i < guests.length; i++) {
     // display players
     const p = guests[i];
@@ -56,45 +90,51 @@ function playerLogic() {
         image(cursor,p.x,p.y,34,34);
       }
     }
-    if (p.alive === false) {
-      deadPlayers+=1;
-    }
-    if (deadPlayers === guests.length) {
-      graveArray = [];
-      me.alive = true;
-      shared.difficulty = 1;
-      shared.objects = [];
-    }
   }
 }
 
 function killLogic() {
-  for (let someBall of ballArray) {
-    // kill the player
-    if (me.alive) {
-      if (dist(someBall.x,someBall.y,mouseX,mouseY) < someBall.radius) {
-        me.alive = false;
-        playerGrave(mouseX,mouseY);
-        // ballArray.splice(ballArray.indexOf(someBall),1);
+  // host logic for when player dies
+  if (partyIsHost()) {
+    for (let i = 0; i < guests.length; i++) {
+        const p = guests[i];
+      for (let theBall of shared.objects) {
+        if ((dist(theBall.x,theBall.y,p.x,p.y) < theBall.radius) && p.alive) {
+          p.alive = false;
+          playerGrave(p.x,p.y);
+          shared.objects.splice(shared.objects.indexOf(theBall),1);
+          break;
+        }
       }
+    }
+  }
+  // client logic for when player dies
+  for (let theBall of shared.objects) {
+    if (dist(theBall.x,theBall.y,mouseX,mouseY) < theBall.radius) {
+      if (me.alive) {
+        playerGrave(mouseX,mouseY);
+      }
+      me.alive = false;
     }
   }
 }
 
 function moveBalls() {
-  for (let someBall of ballArray) {
-    // move the ball
-    someBall.x+=someBall.dx;
-    someBall.y+=someBall.dy;
-    if (someBall.y>height || someBall.x>width || someBall.y<0 || someBall.x<0) {
-      ballArray.splice(ballArray.indexOf(someBall),1);
+  // host logic for ball movement
+  if (partyIsHost()) {
+    for (let someBall of shared.objects) {
+      someBall.x+=someBall.dx;
+      someBall.y+=someBall.dy;
+      if ((someBall.y>height+someBall.radius || someBall.x>width +someBall.radius|| someBall.y<-someBall.radius || someBall.x<-someBall.radius) && partyIsHost()) {
+        shared.objects.splice(shared.objects.indexOf(someBall),1);
+      }
     }
   }
 }
 
 function displayBalls() {
-  for (let someBall of ballArray) {
-    // display the ball
+  // clients displaying the balls
+  for (let someBall of shared.objects) {
     noStroke();
     fill(someBall.red,someBall.green,someBall.blue,someBall.alpha);
     circle(someBall.x,someBall.y,someBall.radius*2);
@@ -103,7 +143,8 @@ function displayBalls() {
 
 
 function displayGraves() {
-  for (let theGrave of graveArray) {
+  // clients display player graves
+  for (let theGrave of shared.graves) {
     // display graves
     fill("red");
     circle(theGrave.x,theGrave.y,13);
@@ -111,36 +152,34 @@ function displayGraves() {
 }
 
 function spawnBalls() {
-  if (frameCount%60===0) {
+  // host logic for creating balls
+  if (frameCount%120===0 && partyIsHost())  {
     for (let i = 0; i < shared.difficulty; i++) {
-      if (partyIsHost()) {
-        let theBall = {
-          x: 0,
-          y: random(0,height),
-          radius: random(25,50),
-          dx: random(+1,+10),
-          dy: random(-1,+1),
-          red: random(127,255),
-          green: random(127,255),
-          blue: random(127,255),
-          alpha: random(127,255),
-        };
-        // ballArray.push(theBall);
-        shared.objects.push(theBall);
-      }
-      ballArray = shared.objects;
+      // create the ball
+      let theBall = {
+        x: 0,
+        y: random(0,height),
+        radius: random(+shared.difficulty*10,+shared.difficulty*25),
+        dx: random(+shared.difficulty*2,+shared.difficulty*5),
+        dy: random(-shared.difficulty,+shared.difficulty),
+        red: random(127,255),
+        green: random(127,255),
+        blue: random(127,255),
+        alpha: random(127,255),
+      };
+      // push the ball
+      shared.objects.push(theBall);
     }
-    if (partyIsHost()) {
-      shared.difficulty+=1;
-    }
+    // increase difficulty over time
+    shared.difficulty+=0.25
   }
 }
 
-function playerGrave() {
+function playerGrave(px,py) {
+  // grave creation
   let theGrave = {
-    x: mouseX,
-    y: mouseY,
+    x: px,
+    y: py,
   };
-  graveArray.push(theGrave);
-  me.obstacles = graveArray;
+  shared.graves.push(theGrave);
 }
