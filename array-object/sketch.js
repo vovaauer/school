@@ -25,14 +25,13 @@ function preload() {
 function setup() {
   if (partyIsHost()) {
     // setup variables as host
-    shared.width = windowWidth
-    shared.height = windowHeight
+    shared.width = 1920
     shared.objects = [];
     shared.graves = []
     shared.difficulty = 1;
   }
   // setup as guest and host
-  createCanvas(shared.width, shared.height);
+  createCanvas(windowWidth, windowHeight);
   me.alive = true;
 }
 
