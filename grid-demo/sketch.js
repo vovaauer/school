@@ -9,8 +9,8 @@
 //         [0,1,1,0]];
 
 let grid;
-
-const GRID_SIZE = 4;
+let shouldToggleNeighbours = true;
+const GRID_SIZE = 5;
 let cellSize;
 
 function setup() {
@@ -24,6 +24,17 @@ function setup() {
   cellSize = height/GRID_SIZE;
 
   grid = generateRandomGrid(GRID_SIZE,GRID_SIZE);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  if (windowWidth<windowHeight) {
+    createCanvas(windowWidth, windowWidth);
+  }
+  else {
+    createCanvas(windowHeight, windowHeight);
+  }
+  cellSize = height/GRID_SIZE;
 }
 
 function draw() {
@@ -81,8 +92,31 @@ function keyPressed() {
   if (key==="e") {
     grid = generateEmptyGrid(GRID_SIZE,GRID_SIZE);
   }
+  if (key==="n") {
+    shouldToggleNeighbours = !shouldToggleNeighbours;
+  }
 }
 
 function mousePressed() {
-  cols = mouseX/width*GRID_SIZE;
+  cols = Math.floor(mouseX/width*GRID_SIZE);
+  rows = Math.floor(mouseY/height*GRID_SIZE);
+  flipCell(cols,rows);
+  if (shouldToggleNeighbours) {
+    flipCell(cols+1,rows);
+    flipCell(cols-1,rows);
+    flipCell(cols,rows+1);
+    flipCell(cols,rows-1);
+  }
+}
+
+function flipCell (cols,rows) {
+  // make sure the cell you are toggling is in the grid
+  if (cols>=0 && rows>=0 && rows < GRID_SIZE && cols < GRID_SIZE) {
+    if (grid[rows][cols] === 0) {
+      grid[rows][cols] = 1;
+    }
+    else {
+      grid[rows][cols] = 0;
+    }
+  }
 }
