@@ -11,6 +11,7 @@
 - [ten rotate](ten-rotate)
 - [grid demo](grid-demo)
 - [game of life](game-of-life)
+- [rectangle grid](rectangle-grid)
 
 ## projects
 - [Interactive Scene](interactivescene)
