@@ -5,15 +5,19 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
+let shared;
+let pacmap;
+
 function preload() {
   partyConnect("wss://demoserver.p5party.org", "albertpacman");
   shared = partyLoadShared("main");
+  pacmap = loadImage("pacmap.png");
 }
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(224, 248);
 }
 
 function draw() {
-  background(0);
+  image(pacmap,0,0,224,248);
 }
