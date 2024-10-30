@@ -5,19 +5,35 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
+const GRID_SIZE = 32;
+
 let shared;
 let pacmap;
+let pacgrid;
 
 function preload() {
   partyConnect("wss://demoserver.p5party.org", "albertpacman");
   shared = partyLoadShared("main");
+  me = partyLoadMyShared();
+  guests = partyLoadGuestShareds();
   pacmap = loadImage("pacmap.png");
+  pacman_2 = loadImage("pacman_2.png");
+
 }
 
 function setup() {
-  createCanvas(224, 248);
+  noSmooth();
+  createCanvas(448, 496);
 }
 
 function draw() {
-  image(pacmap,0,0,224,248);
+  displayGame();
+}
+
+function displayGame() {
+  image(pacmap,0,0,448,496);
+}
+
+function keyPressed() {
+
 }
