@@ -5,7 +5,7 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
-const GRID_SIZE = 8;
+const GRID_SIZE = 20;
 
 let shared;
 let character = {};
@@ -28,15 +28,16 @@ function setup() {
 }
 
 function generateRandomGrid(cols,rows) {
+  shared.grid=[];
   for (let y=0;y<cols;y++) {
     shared.grid.push([]);
     for (let x=0;x<rows;x++) {
       if (random(0,100)<50) {
-        if (true) {
-          shared.grid[y].push("wall");
+        if (false) {
+          shared.grid[y].push("food");
         }
         else {
-          shared.grid[y].push("food");
+          shared.grid[y].push("wall");
         }
       }
       else if (random(0,100)<95){
@@ -48,6 +49,15 @@ function generateRandomGrid(cols,rows) {
     }
   }
 }
+
+function checkNeighbours(y,x) {
+  let neighbours = 0;
+  if (shared.grid[y-1][x-1]==="wall") {
+    neighbours+=1;
+  }
+  return neighbours>1;
+}
+
 
 function draw() {
   displayGrid();
