@@ -9,13 +9,14 @@ const GRID_SIZE = 20;
 
 let shared;
 let character = {};
+let lines;
 
 function preload() {
   partyConnect("wss://demoserver.p5party.org", "albertpacman");
   shared = partyLoadShared("main");
   me = partyLoadMyShared();
   guests = partyLoadGuestShareds();
-
+  lines = loadStrings("1.txt");
 }
 
 function setup() {
@@ -23,29 +24,16 @@ function setup() {
   noStroke();
   createCanvas(windowWidth, windowHeight); 
   if (partyIsHost()) {
-    generateRandomGrid(GRID_SIZE,GRID_SIZE);
+    generateGrid(GRID_SIZE,GRID_SIZE);
   }
 }
 
-function generateRandomGrid(cols,rows) {
+function generateGrid(cols,rows) {
   shared.grid=[];
   for (let y=0;y<cols;y++) {
     shared.grid.push([]);
     for (let x=0;x<rows;x++) {
-      if (random(0,100)<50) {
-        if (false) {
-          shared.grid[y].push("food");
-        }
-        else {
-          shared.grid[y].push("wall");
-        }
-      }
-      else if (random(0,100)<95){
-        shared.grid[y].push("food");
-      }
-      else {
-        shared.grid[y].push("power");
-      }
+      shared.grid.push(lines[y][x]);
     }
   }
 }
@@ -64,6 +52,7 @@ function draw() {
 }
 
 function displayGrid() {
+  background(0);
   for (let y=0;y<GRID_SIZE;y++) {
     for (let x=0;x<GRID_SIZE;x++) {
       if (shared.grid[y][x] === "wall") {
@@ -71,14 +60,10 @@ function displayGrid() {
         square(height/GRID_SIZE*x,height/GRID_SIZE*y,height/GRID_SIZE);
       }
       else if (shared.grid[y][x] === "food") {
-        fill("black");
-        square(height/GRID_SIZE*x,height/GRID_SIZE*y,height/GRID_SIZE);
         fill("white");
         circle(height/GRID_SIZE*x+GRID_SIZE,height/GRID_SIZE*y+GRID_SIZE,GRID_SIZE/2);
       }
       else if (shared.grid[y][x] === "power") {
-        fill("black");
-        square(height/GRID_SIZE*x,height/GRID_SIZE*y,height/GRID_SIZE);
         fill("white");
         circle(height/GRID_SIZE*x+GRID_SIZE,height/GRID_SIZE*y+GRID_SIZE,GRID_SIZE);
       }
