@@ -5,8 +5,6 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
-const GRID_SIZE = 32;
-
 let shared;
 let character = {};
 let lines;
@@ -38,7 +36,8 @@ function setup() {
   textAlign(CENTER);
   createCanvas(560, 620); 
   if (partyIsHost()) {
-    generateGrid(GRID_SIZE,GRID_SIZE);
+    generateGrid(28,31);
+    shared.pacmanExists=false;
   }
 }
 
@@ -52,21 +51,14 @@ function draw() {
   }
   if (started) {
     displayGrid();
+    displayCharacters();
   }
 }
 
 function chooseCharacter() {
-  let pacmanExists = false;
   background(0);
-  for (let i = 0; i < guests.length; i++) {
-    // display players
-    const p = guests[i];
-    if (p.character==="pacman") {
-      pacmanExists = true;
-    }
-  }
-  if (pacmanExists) {
-    text('You are pacman! Click him to enter.',width/2,height/2);
+  if (!shared.pacmanExists) {
+    text('You are pacman! Click enter.',width/2,height/2);
     image(pacman,width/2,height/2);
   }
   else {
@@ -75,18 +67,38 @@ function chooseCharacter() {
   }
 }
 
-function displayGrid() {
-  image(pacmap,0,0,width,height);
-  for (let y=0;y<GRID_SIZE;y++) {
-    for (let x=0;x<GRID_SIZE;x++) {
-      if (shared.grid[y][x] === "P") {
-        fill("blue");
-        square(height/GRID_SIZE*x,height/GRID_SIZE*y,height/GRID_SIZE);
-      }
+function keyPressed() {
+  if (!started && key==="Enter" && !shared.pacmanExists) {
+    shared.pacmanExists=true;
+    me.character="pacman";
+    started = true;
+  }
+}
+
+function mouseClicked() {
+  if (!started && shared.pacmanExists) {
+    if (mouseX >= width/2 && mouseX <= width/2 + shadow.width && mouseY >= height/2 && mouseY <= height/2 + shadow.height) {
+      me.character="shadow";
+      started = true;
     }
   }
 }
 
-function keyPressed() {
+function displayCharacters() {
+  for (let i = 0; i < guests.length; i++) {
+    const p = guests[i];
+    image(`${p.character}`,p.x,p.y,34,34);
+  }
+}
 
+function displayGrid() {
+  image(pacmap,0,0,width,height);
+  for (let y=0;y<31;y++) {
+    for (let x=0;x<28;x++) {
+      if (shared.grid[y][x] === "P") {
+        fill("blue");
+        square(width/28*x,height/31*y,height/28);
+      }
+    }
+  }
 }
