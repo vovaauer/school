@@ -38,14 +38,15 @@ function setup() {
   stroke(0);
   strokeWeight(4);
   textAlign(CENTER);
-  createCanvas(560, 620); 
+  createCanvas(224, 248);
+  // 28x31 or 224x248
   if (partyIsHost()) {
-    generateGrid(28,31);
     shared.pacmanExists=false;
+    generateGrid();
   }
 }
 
-function generateGrid(cols,rows) {
+function generateGrid() {
   shared.grid=lines;
 }
 
@@ -75,8 +76,8 @@ function keyPressed() {
   if (!started && key==="Enter" && !shared.pacmanExists) {
     shared.pacmanExists=true;
     me.character=`pacman`;
-    me.x=0;
-    me.y=0;
+    me.x=104;
+    me.y=180;
     started = true;
   }
 
@@ -110,8 +111,7 @@ function mouseClicked() {
 function displayCharacters() {
   for (let i = 0; i < guests.length; i++) {
     const p = guests[i];
-    console.log(images[p.character],p.x,p.y,34,34);
-    image(images[p.character],p.x,p.y,34,34);
+    image(images[p.character],p.x,p.y);
   }
 }
 
