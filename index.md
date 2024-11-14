@@ -9,6 +9,8 @@
 - [perlin terrain generation](perlin-terrain)
 - [bubble-object-demo](bubble-object-demo)
 - [ten-rotate](ten-rotate)
+- [walker oop](walker-oop)
+- [walker oop array](walker-oop-array)
 
 ## projects
 - [Interactive Scene](interactivescene)

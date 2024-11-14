@@ -59,7 +59,7 @@ function setup() {
   // 28x31 or 224x248
   if (partyIsHost()) {
     shared.pacmanExists=false;
-    shared.grid=lines;
+    shared.grid=lines.map((line) => Array.from(line));
   }
 }
 
@@ -92,8 +92,8 @@ function keyPressed() {
     me.character=`pacman`;
     faceQueue=`right`;
     me.facing=`right`;
-    me.x=112;
-    me.y=188;
+    me.x=111;
+    me.y=191;
     started = true;
   }
 
@@ -120,8 +120,8 @@ function mouseClicked() {
       me.character=`shadow`;
       faceQueue=`up`;
       me.facing=`up`;
-      me.x=112;
-      me.y=188;
+      me.x=111;
+      me.y=191;
       started = true;
     }
   }
@@ -135,51 +135,52 @@ function displayCharacters() {
 }
 
 function displayGrid() {
-  fill(248,176,144)
+  fill(248,176,144);
   image(images.pacmap,0,0,width,height);
   for (let y=0;y<31;y++) {
     for (let x=0;x<28;x++) {
       if (shared.grid[y][x] === "F") {
         square(x*8+3,y*8+3,3);
+        if (me.character===`pacman` && (me.x+1)%8===0 && (me.y+1)%8===0) {
+          shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] = "E";
+        }
       }
       else if (shared.grid[y][x] === "P") {
-        ellipse(x*8+4,y*8+4,2);
+        ellipse(x*8+4,y*8+4,7);
       }
     }
   }
 }
 
 function moveCharacter() {
-  if (faceQueue===`up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`)) {
-    me.facing=`up`
+  if (faceQueue===`up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`) && (me.x+1)%8===0) {
+    me.facing=`up`;
   }
-  if ((y+1)%8=0) {
-    if (faceQueue===`left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`)) {
-      me.facing=`left`
-    }
+  else if (faceQueue===`left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`) && (me.y+1)%8===0) {
+    me.facing=`left`;
   }
-  if (faceQueue===`down` && !(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`W`)) {
-    me.facing=`down`
+  else if (faceQueue===`down` && !(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`W`) && (me.x+1)%8===0) {
+    me.facing=`down`;
   }
-  if (faceQueue===`right` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`W`)) {
-    me.facing=`right`
+  else if (faceQueue===`right` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`W`) && (me.y+1)%8===0) {
+    me.facing=`right`;
   }
   if (me.facing === `up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
-    me.y-=1
+    me.y-=1;
   }
   else if (me.facing === `left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`) && (!(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`D`) || !(me.character===`pacman`))) {
-    me.x-=1
+    me.x-=1;
   }
-  else if (me.facing === `down` && !(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
-    me.y+=1
+  else if (me.facing === `down` && !(shared.grid[Math.floor((me.y+1)/8)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
+    me.y+=1;
   }
-  else if (me.facing === `right` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`W`) && (!(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`D`) || !(me.character===`pacman`))) {
-    me.x+=1
+  else if (me.facing === `right` && !(shared.grid[Math.floor(me.y/8)][Math.floor((me.x+1)/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`D`) || !(me.character===`pacman`))) {
+    me.x+=1;
   }
   if (me.x>width+8) {
-    me.x=-8
+    me.x=-8;
   }
   else if (me.x<-8) {
-    me.x=width+8
+    me.x=width+8;
   }
 }
