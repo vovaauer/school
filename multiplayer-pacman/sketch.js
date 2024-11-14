@@ -1,9 +1,10 @@
-// Project Title
-// Your Name
-// Date
+// Multiplayer Pacman
+// Albert Auer
+// 11/15/2024
 //
 // Extra for Experts:
-// - describe what you did to take this project "above and beyond"
+// - p5.party
+// - Game runs when host has minimized tab
 
 let shared;
 let character = {};
@@ -14,6 +15,7 @@ let pacman;
 let shadow;
 let speedy;
 let started = false;
+let faceQueue;
 
 function preload() {
   partyConnect("wss://demoserver.p5party.org", "albertpacman");
@@ -23,10 +25,25 @@ function preload() {
   lines = loadStrings("1.txt");
 
   images = {
-    pacmap: loadImage("pacmap.png"),
-    pacman: loadImage("pacman_2.png"),
-    shadow: loadImage("shadow_right.png"),
-    speedy: loadImage("speedy_right.png")
+    pacmap: loadImage("assets/pacmap.png"),
+    pacman: {
+      up: loadImage("assets/pacman_2.png"),
+      left: loadImage("assets/pacman_2.png"),
+      down: loadImage("assets/pacman_2.png"),
+      right: loadImage("assets/pacman_2.png"),
+    },
+    shadow: {
+      up: loadImage("assets/shadow_right.png"),
+      left: loadImage("assets/shadow_right.png"),
+      down: loadImage("assets/shadow_right.png"),
+      right: loadImage("assets/shadow_right.png"),
+    },
+    speedy: {
+      up: loadImage("assets/shadow_right.png"),
+      left: loadImage("assets/shadow_right.png"),
+      down: loadImage("assets/shadow_right.png"),
+      right: loadImage("assets/shadow_right.png"),
+    },
   };
 }
 
@@ -42,12 +59,8 @@ function setup() {
   // 28x31 or 224x248
   if (partyIsHost()) {
     shared.pacmanExists=false;
-    generateGrid();
+    shared.grid=lines;
   }
-}
-
-function generateGrid() {
-  shared.grid=lines;
 }
 
 function draw() {
@@ -57,6 +70,7 @@ function draw() {
   if (started) {
     displayGrid();
     displayCharacters();
+    moveCharacter();
   }
 }
 
@@ -64,11 +78,11 @@ function chooseCharacter() {
   background(0);
   if (!shared.pacmanExists) {
     text('You are pacman! Click enter.',width/2,height/2);
-    image(images.pacman,width/2,height/2);
+    image(images.pacman.right,width/2,height/2);
   }
   else {
     text('You are a ghost! Click a ghost to start.',width/2,height/2);
-    image(images.shadow,width/2,height/2);
+    image(images.shadow.right,width/2,height/2);
   }
 }
 
@@ -76,33 +90,38 @@ function keyPressed() {
   if (!started && key==="Enter" && !shared.pacmanExists) {
     shared.pacmanExists=true;
     me.character=`pacman`;
-    me.x=104;
-    me.y=180;
+    faceQueue=`right`;
+    me.facing=`right`;
+    me.x=112;
+    me.y=188;
     started = true;
   }
 
   if (started === true) {
     if (key==="w") {
-      me.facing="up";
+      faceQueue=`up`;
     }
     if (key==="a") {
-      me.facing="left";
+      faceQueue=`left`;
     }
     if (key==="s") {
-      me.facing="down";
+      faceQueue=`down`;
     }
     if (key==="d") {
-      me.facing="right";
+      faceQueue=`right`;
     }
   }
 }
 
 function mouseClicked() {
   if (!started && shared.pacmanExists) {
-    if (mouseX >= width/2 && mouseX <= width/2 + shadow.width && mouseY >= height/2 && mouseY <= height/2 + shadow.height) {
+    // if (mouseX >= width/2 && mouseX <= width/2 + images.shadow.right && mouseY >= height/2 && mouseY <= height/2 + images.shadow.right) {
+    if (true) {
       me.character=`shadow`;
-      me.x=0;
-      me.y=0;
+      faceQueue=`up`;
+      me.facing=`up`;
+      me.x=112;
+      me.y=188;
       started = true;
     }
   }
@@ -111,18 +130,54 @@ function mouseClicked() {
 function displayCharacters() {
   for (let i = 0; i < guests.length; i++) {
     const p = guests[i];
-    image(images[p.character],p.x,p.y);
+    image(images[p.character][p.facing],p.x-11,p.y-11,16,16);
   }
 }
 
 function displayGrid() {
+  fill(248,176,144)
   image(images.pacmap,0,0,width,height);
   for (let y=0;y<31;y++) {
     for (let x=0;x<28;x++) {
-      if (shared.grid[y][x] === "P") {
-        fill("blue");
-        square(width/28*x,height/31*y,height/28);
+      if (shared.grid[y][x] === "F") {
+        square(x*8+3,y*8+3,3);
+      }
+      else if (shared.grid[y][x] === "P") {
+        ellipse(x*8+4,y*8+4,2);
       }
     }
+  }
+}
+
+function moveCharacter() {
+  if (faceQueue===`up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`)) {
+    me.facing=`up`
+  }
+  if (faceQueue===`left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`)) {
+    me.facing=`left`
+  }
+  if (faceQueue===`down` && !(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`W`)) {
+    me.facing=`down`
+  }
+  if (faceQueue===`right` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`W`)) {
+    me.facing=`right`
+  }
+  if (me.facing === `up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
+    me.y-=1
+  }
+  else if (me.facing === `left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`) && (!(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`D`) || !(me.character===`pacman`))) {
+    me.x-=1
+  }
+  else if (me.facing === `down` && !(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
+    me.y+=1
+  }
+  else if (me.facing === `right` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`W`) && (!(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`D`) || !(me.character===`pacman`))) {
+    me.x+=1
+  }
+  if (me.x>width+8) {
+    me.x=-8
+  }
+  else if (me.x<-8) {
+    me.x=width+8
   }
 }

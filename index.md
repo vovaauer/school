@@ -7,15 +7,11 @@
 - [generative art](art)
 - [perlin noise ball](perlin)
 - [perlin terrain generation](perlin-terrain)
-- [bubble object demo](bubble-object-demo)
-- [ten rotate](ten-rotate)
-- [grid demo](grid-demo)
-- [game of life](game-of-life)
-- [rectangle grid](rectangle-grid)
-- [walker oop](walker-oop)
-
+- [bubble-object-demo](bubble-object-demo)
+- [ten-rotate](ten-rotate)
 
 ## projects
 - [Interactive Scene](interactivescene)
 - [Arrays and Object Notation](array-object)
-- [Multiplay Pacman Grid Based Game](multiplayer-pacman)
+
+## other
