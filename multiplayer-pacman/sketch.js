@@ -153,8 +153,10 @@ function moveCharacter() {
   if (faceQueue===`up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`)) {
     me.facing=`up`
   }
-  if (faceQueue===`left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`)) {
-    me.facing=`left`
+  if ((y+1)%8=0) {
+    if (faceQueue===`left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`)) {
+      me.facing=`left`
+    }
   }
   if (faceQueue===`down` && !(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`W`)) {
     me.facing=`down`
