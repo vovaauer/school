@@ -14,7 +14,6 @@ const POWER_PELLET_DURATION = 10000;
 
 // global variables
 let shared;
-let character = {};
 let lines;
 let images;
 let pellet;
