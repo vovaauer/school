@@ -6,10 +6,13 @@
 // - p5.party
 // - Game runs when host has minimized tab
 
+// global variables
 let shared;
 let character = {};
 let lines;
 let images;
+let pellet;
+let power_pellet;
 let pacmap;
 let pacman;
 let shadow;
@@ -21,23 +24,26 @@ let pacman_death;
 let ghost_death;
 let eat_power;
 let soundCounter;
-
 let powerTimer;
 
 function preload() {
+  // p5 party basics
   partyConnect("wss://demoserver.p5party.org", "albertpacman");
   shared = partyLoadShared("main");
   me = partyLoadMyShared();
   guests = partyLoadGuestShareds();
   lines = loadStrings("1.txt");
+  // loading sounds
   wa = loadSound("assets/wa.wav");
   ka = loadSound("assets/ka.wav");
   eat_power = loadSound("assets/eat_power.wav")
   pacman_death = loadSound("assets/pacman_death.wav")
   ghost_death = loadSound("assets/ghost_death.wav")
-
+  // loading assets
   images = {
     pacmap: loadImage("assets/pacmap.png"),
+    power_pellet: loadImage("assets/power_pellet.png"),
+    pellet: loadImage("assets/pellet.png"),
     pacman: {
       open: {
         up: loadImage("assets/pacman_open_up.png"),
@@ -90,14 +96,10 @@ function preload() {
 }
 
 function setup() {
-  strokeWeight(4);
-  noSmooth();
-  noStroke();
+  // create canvas
   createCanvas(224, 248);
-  // 28x31 or 224x248
-  me.started=false;
-  me.alive=true;
   if (partyIsHost()) {
+    // setup variables as host
     shared.powered=false;
     shared.pacmanExists=false;
     shared.grid=lines.map((line) => Array.from(line));
@@ -106,9 +108,11 @@ function setup() {
 
 function draw() {
   if (!me.started) {
+    // start screen
     chooseCharacter();
   }
   if (me.started) {
+    // in game functions
     gridLogic();
     characterLogic();
     moveCharacter();
@@ -116,16 +120,20 @@ function draw() {
 }
 
 function chooseCharacter() {
-  textSize(10);
+  // text setup
+  textSize(8);
   fill(255);
   stroke(0);
   textAlign(CENTER);
   background(0);
+  // remove smoothing so pacman is crisp
   noSmooth();
+  // pacman selection
   if (!shared.pacmanExists) {
     text('You are pacman! Click anywhere.',width/2,height/3);
     image(images.pacman.closed.right,width/2-32,height/2,32,32);
   }
+  // ghost selection
   else {
     text('You are a ghost! Click a ghost.',width/2,height/2.5 );
     image(images.shadow.right,width/2-56,height/2,32,32);
@@ -136,6 +144,7 @@ function chooseCharacter() {
 }
 
 function keyPressed() {
+  // wasd movement (queueing)
   if (me.started === true) {
     if (key==="w") {
       faceQueue=`up`;
@@ -153,6 +162,7 @@ function keyPressed() {
 }
 
 function mouseClicked() {
+  // start as pacman
   if (!me.started && !shared.pacmanExists) {
     shared.pacmanExists=true;
     me.character=`pacman`;
@@ -163,8 +173,10 @@ function mouseClicked() {
     me.y=191;
     me.started = true;
   }
+  // start as ghost
   if (!me.started && shared.pacmanExists) {
     if (mouseY >= height/2 && mouseY <= height/2 + 32) {
+      // which ghost?
       if (mouseX >= width/2-56 && mouseX <= width/2-24) {
         setupGhost('shadow');
       }
@@ -180,6 +192,7 @@ function mouseClicked() {
     }
   }
 }
+// setup as ghost
 function setupGhost(character) {
   me.character=character;
   faceQueue = 'up';
@@ -193,28 +206,36 @@ function setupGhost(character) {
 function characterLogic() {
   for (let i = 0; i < guests.length; i++) {
     const p = guests[i];
+    // pacman logic
     if (p.character===`pacman`) {
       image(images[p.character][p.state][p.facing],p.x-11,p.y-11);
+      // kills self if close enough to ghost
       if (((me.x-p.x<=8 && me.x-p.x>=-8) && (me.y-p.y<=8 && me.y-p.y>=-8)) && me.character!==`pacman` && !shared.powered && me.alive===true) {
         shared.pacmanExists=false;
       }
     }
+    // ghost logic
     else {
+      // kill pacman if close enough
       if (((me.x-p.x<=8 && me.x-p.x>=-8) && (me.y-p.y<=8 && me.y-p.y>=-8)) && me.character==`pacman` && !shared.powered && p.alive===true) {
         shared.pacmanExists=false;
       }
       if (p.started) {
         if (p.alive) {
+          // when power pellet isn't active
           if (!shared.powered) {
             image(images[p.character][p.facing],p.x-11,p.y-11);
           }
-        else {
-          image(images[`edible`][`blue`],p.x-11,p.y-11);
-        }
-        }
+        // when power pellet is active
           else {
-            image(images[`dead`][p.facing],p.x-11,p.y-11);
+            image(images[`edible`][`blue`],p.x-11,p.y-11);
           }
+        }
+        // when ghost is dead
+        else {
+          image(images[`dead`][p.facing],p.x-11,p.y-11);
+        }
+        // ghost death logic
         if (((me.x-p.x<=8 && me.x-p.x>=-8) && (me.y-p.y<=8 && me.y-p.y>=-8)) && me.character==`pacman` && shared.powered && p.alive) {
           p.alive=false
           ghost_death.play()
@@ -222,6 +243,7 @@ function characterLogic() {
       }
     }
   }
+  // pacman left or died? end the game
   if (!shared.pacmanExists) {
     endGame()
   }
@@ -229,12 +251,13 @@ function characterLogic() {
 
 function gridLogic() {
   let foodCount = 0;
-  fill(248,176,144);
   image(images.pacmap,0,0,width,height);
+  // 2d array loop
   for (let y=0;y<31;y++) {
     for (let x=0;x<28;x++) {
+      // food space logic
       if (shared.grid[y][x] === "F") {
-        square(x*8+3,y*8+3,3);
+        image(images.pellet,x*8+3,y*8+3);
         foodCount+=1
         if (me.character === 'pacman' && (me.x+1)%8 === 0 && (me.y+1)%8 === 0 && (shared.grid[(me.y+1)/8-1][(me.x+1)/8-1]==="F")) {
           shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] = "E"
@@ -248,11 +271,13 @@ function gridLogic() {
           }
         }
       }
+      // power pellet space logic 
       else if (shared.grid[y][x] === "P") {
-        ellipse(x*8+4,y*8+4,7);
+        image(images.power_pellet,x*8,y*8);
         foodCount+=1
       }
       if (me.character === 'pacman' && (me.x+1)%8 === 0 && (me.y+1)%8 === 0) {
+        // power pellet eating logic
         if (shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] === "P") {
           shared.powered = true;
           shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] = "E";
@@ -269,6 +294,7 @@ function gridLogic() {
       }
     }
   }
+  // if all food is eaten, end the game
   if (foodCount===0 || !shared.pacmanExists) {
     endGame();
   }
@@ -276,18 +302,22 @@ function gridLogic() {
 
 function endGame() {
   pacman_death.play()
+  // to not affect game while in menu
   me.x=111;
   me.y=119;
   me.character=`shadow`
+  // reset variables
   me.alive=true;
   shared.powered=false;
   me.started=false;
   shared.pacmanExists=false;
+  // reset grid
   shared.grid=lines.map((line) => Array.from(line));
 }
 
 function moveCharacter() {
   let moved=false;
+  // logic to change direction with queue
   if (faceQueue===`up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`) && (me.x+1)%8===0) {
     me.facing=`up`;
   }
@@ -300,7 +330,7 @@ function moveCharacter() {
   else if (faceQueue===`right` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`W`) && (me.y+1)%8===0) {
     me.facing=`right`;
   }
-  if (me.character===`pacman`||!shared.powered||frameCount%2===0)
+  // logic to actually move and stop when hitting a wall
   if (me.facing === `up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
     me.y-=1;
     moved=true;
@@ -317,12 +347,14 @@ function moveCharacter() {
     me.x+=1;
     moved=true;
   }
+  // portal logic
   if (me.x>width+8) {
     me.x=-8;
   }
   else if (me.x<-8) {
     me.x=width+8;
   }
+  // pacman opening and closing mouth logic
   if (frameCount%4===0 && moved===true && me.character===`pacman`) {
     if (me.state===`open`)
       me.state=`closed`;
@@ -330,6 +362,7 @@ function moveCharacter() {
       me.state=`open`;
     }
   }
+  // ghost respawn logic
   if (!me.alive && me.character !== 'pacman' && shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8)] === "D") {
     me.alive = true;
   }
