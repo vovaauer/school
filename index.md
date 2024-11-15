@@ -15,5 +15,6 @@
 ## projects
 - [Interactive Scene](interactivescene)
 - [Arrays and Object Notation](array-object)
+- [Multiplayer Pacman 2D Array](multiplayer-pacman)
 
 ## other
