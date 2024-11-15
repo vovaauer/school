@@ -17,17 +17,17 @@ let shared;
 let lines;
 let images;
 let pellet;
-let power_pellet;
+let powerPellet;
 let pacmap;
 let pacman;
 let shadow;
 let speedy;
 let faceQueue;
-let wa_sound;
-let ka_sound;
-let pacman_death;
-let ghost_death;
-let eat_power;
+let waSound;
+let kaSound;
+let pacmanDeathSound;
+let ghostDeathSound;
+let eatPowerSound;
 let soundCounter;
 let powerTimer;
 
@@ -39,11 +39,11 @@ function preload() {
   guests = partyLoadGuestShareds();
   lines = loadStrings("1.txt");
   // loading sounds
-  wa_sound = loadSound("assets/wa.wav");
-  ka_sound = loadSound("assets/ka.wav");
-  eat_power = loadSound("assets/eat_power.wav")
-  pacman_death = loadSound("assets/pacman_death.wav")
-  ghost_death = loadSound("assets/ghost_death.wav")
+  waSound = loadSound("assets/wa.wav");
+  kaSound = loadSound("assets/ka.wav");
+  eatPowerSound = loadSound("assets/eat_power.wav");
+  pacmanDeathSound = loadSound("assets/pacman_death.wav");
+  ghostDeathSound = loadSound("assets/ghost_death.wav");
   // loading assets
   images = {
     pacmap: loadImage("assets/pacmap.png"),
@@ -105,8 +105,8 @@ function setup() {
   createCanvas(224, 248);
   if (partyIsHost()) {
     // setup variables as host
-    shared.powered=false;
-    shared.pacmanExists=false;
+    shared.powered = false;
+    shared.pacmanExists = false;
     shared.grid=lines.map((line) => Array.from(line));
   }
 }
@@ -125,6 +125,7 @@ function draw() {
 }
 
 function chooseCharacter() {
+  const ICON_SIZE = 32;
   // text setup
   textSize(8);
   fill(255);
@@ -135,33 +136,33 @@ function chooseCharacter() {
   noSmooth();
   // pacman selection
   if (!shared.pacmanExists) {
-    text('You are pacman! Click anywhere.',width/2,height/3);
-    image(images.pacman.closed.right,width/2-32,height/2,32,32);
+    text('You are pacman! Click anywhere.', width/2, height/3);
+    image(images.pacman.closed.right, width/2 - ICON_SIZE/2, height/2, ICON_SIZE, ICON_SIZE);
   }
   // ghost selection
   else {
-    text('You are a ghost! Click a ghost.',width/2,height/2.5 );
-    image(images.shadow.right,width/2-56,height/2,32,32);
-    image(images.speedy.right,width/2-24,height/2,32,32);
-    image(images.bashful.right,width/2+8,height/2,32,32);
-    image(images.pokey.right,width/2+40,height/2,32,32);
+    text('You are a ghost! Click a ghost.', width/2, height/2.5);
+    image(images.shadow.right, width/2 - 56, height/2, ICON_SIZE, ICON_SIZE);
+    image(images.speedy.right, width/2 - 24, height/2, ICON_SIZE, ICON_SIZE);
+    image(images.bashful.right, width/2 + 8, height/2, ICON_SIZE, ICON_SIZE);
+    image(images.pokey.right, width/2 + 40, height/2, ICON_SIZE, ICON_SIZE);
   }
 }
 
 function keyPressed() {
   // wasd movement (queueing)
   if (me.started === true) {
-    if (key==="w") {
-      faceQueue=`up`;
+    if (key === "w") {
+      faceQueue = `up`;
     }
-    if (key==="a") {
-      faceQueue=`left`;
+    if (key === "a") {
+      faceQueue = `left`;
     }
-    if (key==="s") {
-      faceQueue=`down`;
+    if (key === "s") {
+      faceQueue = `down`;
     }
-    if (key==="d") {
-      faceQueue=`right`;
+    if (key === "d") {
+      faceQueue = `right`;
     }
   }
 }
@@ -169,29 +170,29 @@ function keyPressed() {
 function mouseClicked() {
   // start as pacman
   if (!me.started && !shared.pacmanExists) {
-    shared.pacmanExists=true;
-    me.character=`pacman`;
-    faceQueue=`right`;
-    me.facing=`right`;
-    me.state=`open`;
-    me.x=111;
-    me.y=191;
+    shared.pacmanExists = true;
+    me.character = `pacman`;
+    faceQueue = `right`;
+    me.facing = `right`;
+    me.state = `open`;
+    me.x = 111;
+    me.y = 191;
     me.started = true;
   }
   // start as ghost
   if (!me.started && shared.pacmanExists) {
     if (mouseY >= height/2 && mouseY <= height/2 + 32) {
       // which ghost?
-      if (mouseX >= width/2-56 && mouseX <= width/2-24) {
+      if (mouseX >= width/2 - 56 && mouseX <= width/2 - 24) {
         setupGhost('shadow');
       }
-      else if (mouseX >= width/2-24 && mouseX <= width/2+8) {
+      else if (mouseX >= width/2 - 24 && mouseX <= width/2 + 8) {
         setupGhost('speedy');
       }
-      else if (mouseX >= width/2+8 && mouseX <= width/2+40) {
+      else if (mouseX >= width/2 + 8 && mouseX <= width/2 + 40) {
         setupGhost('bashful');
       }
-      else if (mouseX >= width/2+40 && mouseX <= width/2+72) {
+      else if (mouseX >= width/2 + 40 && mouseX <= width/2 + 72) {
         setupGhost('pokey');
       }
     }
@@ -199,7 +200,7 @@ function mouseClicked() {
 }
 // setup as ghost
 function setupGhost(character) {
-  me.character=character;
+  me.character = character;
   faceQueue = 'up';
   me.facing = 'up';
   me.x = 111;
@@ -213,85 +214,85 @@ function characterLogic() {
   for (let i = 0; i < guests.length; i++) {
     const p = guests[i];
     // pacman logic
-    if (p.character===`pacman`) {
+    if (p.character === `pacman`) {
       localPacmanExists = true;
-      image(images[p.character][p.state][p.facing],p.x-11,p.y-11);
+      image(images[p.character][p.state][p.facing], p.x-11, p.y-11);
       // kills self if close enough to ghost
-      if (((me.x-p.x<=8 && me.x-p.x>=-8) && (me.y-p.y<=8 && me.y-p.y>=-8)) && me.character!==`pacman` && !shared.powered && me.alive===true) {
-        shared.pacmanExists=false;
+      if (me.x - p.x <= 8 && me.x - p.x >= -8 && me.y - p.y <= 8 && me.y - p.y >= -8 && me.character !== `pacman` && !shared.powered && me.alive === true) {
+        shared.pacmanExists = false;
       }
     }
     // ghost logic
     else {
       // kill pacman if close enough
-      if (((me.x-p.x<=8 && me.x-p.x>=-8) && (me.y-p.y<=8 && me.y-p.y>=-8)) && me.character==`pacman` && !shared.powered && p.alive===true) {
-        shared.pacmanExists=false;
+      if (me.x - p.x <= 8 && me.x - p.x >= -8 && me.y - p.y <= 8 && me.y - p.y >= -8 && me.character === `pacman` && !shared.powered && p.alive === true) {
+        shared.pacmanExists = false;
       }
       if (p.started) {
         if (p.alive) {
           // when power pellet isn't active
           if (!shared.powered) {
-            image(images[p.character][p.facing],p.x-11,p.y-11);
+            image(images[p.character][p.facing], p.x-11, p.y-11);
           }
-        // when power pellet is active
+          // when power pellet is active
           else {
-            image(images[`edible`][`blue`],p.x-11,p.y-11);
+            image(images[`edible`][`blue`], p.x-11, p.y-11);
           }
         }
         // when ghost is dead
         else {
-          image(images[`dead`][p.facing],p.x-11,p.y-11);
+          image(images[`dead`][p.facing], p.x-11, p.y-11);
         }
         // ghost death logic
-        if (((me.x-p.x<=8 && me.x-p.x>=-8) && (me.y-p.y<=8 && me.y-p.y>=-8)) && me.character==`pacman` && shared.powered && p.alive) {
-          p.alive=false
-          ghost_death.play()
+        if (me.x - p.x <= 8 && me.x - p.x >= -8 && me.y - p.y <= 8 && me.y - p.y >= -8 && me.character === `pacman` && shared.powered && p.alive) {
+          p.alive = false;
+          ghostDeathSound.play();
         }
       }
     }
   }
   // pacman left or died? end the game
   if (!localPacmanExists) {
-    shared.pacmanExists=false;
+    shared.pacmanExists = false;
   }
   if (!shared.pacmanExists) {
-    endGame()
+    endGame();
   }
 }
 
 function gridLogic() {
   let foodCount = 0;
-  image(images.pacmap,0,0,width,height);
+  image(images.pacmap, 0, 0, width, height);
   // 2d array loop
-  for (let y=0;y<GRID_HEIGHT;y++) {
-    for (let x=0;x<GRID_WIDTH;x++) {
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
       // food space logic
       if (shared.grid[y][x] === "F") {
-        image(images.pellet,x*GRID_SIZE+3,y*GRID_SIZE+3);
-        foodCount+=1
-        if (me.character === 'pacman' && (me.x+1)%GRID_SIZE === 0 && (me.y+1)%GRID_SIZE === 0 && (shared.grid[(me.y+1)/GRID_SIZE-1][(me.x+1)/GRID_SIZE-1]==="F")) {
-          shared.grid[(me.y+1)/GRID_SIZE-1][(me.x+1)/GRID_SIZE-1] = "E"
+        image(images.pellet, x*GRID_SIZE + 3, y*GRID_SIZE + 3);
+        foodCount += 1;
+        if (me.character === 'pacman' && (me.x + 1) % GRID_SIZE === 0 && (me.y + 1) % GRID_SIZE === 0 && shared.grid[(me.y + 1)/GRID_SIZE - 1][(me.x + 1)/GRID_SIZE - 1] === "F") {
+          shared.grid[(me.y + 1)/GRID_SIZE - 1][(me.x + 1)/GRID_SIZE - 1] = "E";
           if (soundCounter) {
-            soundCounter=!soundCounter
-            wa_sound.play();
+            soundCounter = !soundCounter;
+            waSound.play();
           }
           else {
-            soundCounter=!soundCounter
-            ka_sound.play();
+            soundCounter = !soundCounter;
+            kaSound.play();
           }
         }
       }
       // power pellet space logic 
       else if (shared.grid[y][x] === "P") {
-        image(images.power_pellet,x*GRID_SIZE,y*GRID_SIZE);
-        foodCount+=1
+        image(images.power_pellet, x*GRID_SIZE, y*GRID_SIZE);
+        foodCount += 1;
       }
-      if (me.character === 'pacman' && (me.x+1)%GRID_SIZE === 0 && (me.y+1)%GRID_SIZE === 0) {
+      if (me.character === 'pacman' && (me.x + 1) % GRID_SIZE === 0 && (me.y + 1) % GRID_SIZE === 0) {
         // power pellet eating logic
-        if (shared.grid[(me.y+1)/GRID_SIZE-1][(me.x+1)/GRID_SIZE-1] === "P") {
+        if (shared.grid[(me.y + 1)/GRID_SIZE - 1][(me.x + 1)/GRID_SIZE - 1] === "P") {
           shared.powered = true;
-          shared.grid[(me.y+1)/GRID_SIZE-1][(me.x+1)/GRID_SIZE-1] = "E";
-          eat_power.play()
+          shared.grid[(me.y + 1)/GRID_SIZE - 1][(me.x + 1)/GRID_SIZE - 1] = "E";
+          eatPowerSound.play();
           if (powerTimer) {
             clearTimeout(powerTimer);
           }
@@ -305,74 +306,75 @@ function gridLogic() {
     }
   }
   // if all food is eaten, end the game
-  if (foodCount===0 || !shared.pacmanExists) {
+  if (foodCount === 0 || !shared.pacmanExists) {
     endGame();
   }
 }
 
 function endGame() {
-  pacman_death.play()
-  shared.pacmanExists=false;
-      // reset grid
+  pacmanDeathSound.play();
+  shared.pacmanExists = false;
+  // reset grid
   shared.grid=lines.map((line) => Array.from(line));
   for (let i = 0; i < guests.length; i++) {
     const p = guests[i];
     // to not affect game while in menu
-    p.x=111;
-    p.y=119;
-    p.character=`shadow`
+    p.x = 111;
+    p.y = 119;
+    p.character = `shadow`;
     // reset variables
-    p.alive=true;
-    shared.powered=false;
-    p.started=false;
+    p.alive = true;
+    shared.powered = false;
+    p.started = false;
   }
 }
 
 function moveCharacter() {
-  let moved=false;
+  let moved = false;
   // logic to change direction with queue
-  if (faceQueue===`up` && !(shared.grid[Math.floor(me.y/GRID_SIZE-1)][Math.floor(me.x/GRID_SIZE)]===`W`) && (me.x+1)%GRID_SIZE===0) {
-    me.facing=`up`;
+  if (faceQueue === `up` && !(shared.grid[Math.floor(me.y/GRID_SIZE - 1)][Math.floor(me.x/GRID_SIZE)] === `W`) && (me.x + 1) % GRID_SIZE === 0) {
+    me.facing = `up`;
   }
-  else if (faceQueue===`left` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE-1)]===`W`) && (me.y+1)%GRID_SIZE===0) {
-    me.facing=`left`;
+  else if (faceQueue === `left` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE - 1)] === `W`) && (me.y + 1) % GRID_SIZE === 0) {
+    me.facing = `left`;
   }
-  else if (faceQueue===`down` && !(shared.grid[Math.floor(me.y/GRID_SIZE+1)][Math.floor(me.x/GRID_SIZE)]===`W`) && (me.x+1)%GRID_SIZE===0) {
-    me.facing=`down`;
+  else if (faceQueue === `down` && !(shared.grid[Math.floor(me.y/GRID_SIZE+1)][Math.floor(me.x/GRID_SIZE)] === `W`) && (me.x + 1) % GRID_SIZE === 0) {
+    me.facing = `down`;
   }
-  else if (faceQueue===`right` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE+1)]===`W`) && (me.y+1)%GRID_SIZE===0) {
-    me.facing=`right`;
+  else if (faceQueue === `right` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE + 1)] === `W`) && (me.y + 1) % GRID_SIZE === 0) {
+    me.facing = `right`;
   }
   // logic to actually move and stop when hitting a wall
-  if (me.facing === `up` && !(shared.grid[Math.floor(me.y/GRID_SIZE-1)][Math.floor(me.x/GRID_SIZE)]===`W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE-1)][Math.floor(me.x/GRID_SIZE)]===`D`) || !(me.character===`pacman`))) {
-    me.y-=1;
-    moved=true;
+  if (me.facing === `up` && !(shared.grid[Math.floor(me.y/GRID_SIZE - 1)][Math.floor(me.x/GRID_SIZE)] === `W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE-1)][Math.floor(me.x/GRID_SIZE)] === `D`) || !(me.character === `pacman`))) {
+    me.y -= 1;
+    moved = true;
   }
-  else if (me.facing === `left` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE-1)]===`W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE-1)]===`D`) || !(me.character===`pacman`))) {
-    me.x-=1;
-    moved=true;
+  else if (me.facing === `left` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE - 1)] === `W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE - 1)] === `D`) || !(me.character === `pacman`))) {
+    me.x -= 1;
+    moved = true;
   }
-  else if (me.facing === `down` && !(shared.grid[Math.floor((me.y+1)/GRID_SIZE)][Math.floor(me.x/GRID_SIZE)]===`W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE+1)][Math.floor(me.x/GRID_SIZE)]===`D`) || !(me.character===`pacman`))) {
-    me.y+=1;
-    moved=true;
+  else if (me.facing === `down` && !(shared.grid[Math.floor((me.y + 1)/GRID_SIZE)][Math.floor(me.x/GRID_SIZE)] === `W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE+1)][Math.floor(me.x/GRID_SIZE)] === `D`) || !(me.character === `pacman`))) {
+    me.y += 1;
+    moved = true;
   }
-  else if (me.facing === `right` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor((me.x+1)/GRID_SIZE)]===`W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE+1)]===`D`) || !(me.character===`pacman`))) {
-    me.x+=1;
-    moved=true;
+  else if (me.facing === `right` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor((me.x + 1)/GRID_SIZE)] === `W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE + 1)] === `D`) || !(me.character === `pacman`))) {
+    me.x += 1;
+    moved = true;
   }
   // portal logic
-  if (me.x>width+GRID_SIZE) {
-    me.x=-GRID_SIZE;
+  if (me.x > width + GRID_SIZE) {
+    me.x = -GRID_SIZE;
   }
-  else if (me.x<-GRID_SIZE) {
-    me.x=width+GRID_SIZE;
+  else if (me.x <- GRID_SIZE) {
+    me.x = width + GRID_SIZE;
   }
   // pacman opening and closing mouth logic
-  if (frameCount%4===0 && moved===true && me.character===`pacman`) {
-    if (me.state===`open`)
-      me.state=`closed`;
+  if (frameCount % 4===0 && moved === true && me.character === `pacman`) {
+    if (me.state === `open`) {
+      me.state = `closed`;
+    }
     else {
-      me.state=`open`;
+      me.state = `open`;
     }
   }
   // ghost respawn logic
