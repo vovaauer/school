@@ -6,6 +6,12 @@
 // - p5.party
 // - Game runs when host has minimized tab
 
+// constants
+const GRID_SIZE = 8;
+const GRID_WIDTH = 28;
+const GRID_HEIGHT = 31;
+const POWER_PELLET_DURATION = 10000;
+
 // global variables
 let shared;
 let character = {};
@@ -18,8 +24,8 @@ let pacman;
 let shadow;
 let speedy;
 let faceQueue;
-let wa;
-let ka;
+let wa_sound;
+let ka_sound;
 let pacman_death;
 let ghost_death;
 let eat_power;
@@ -34,8 +40,8 @@ function preload() {
   guests = partyLoadGuestShareds();
   lines = loadStrings("1.txt");
   // loading sounds
-  wa = loadSound("assets/wa.wav");
-  ka = loadSound("assets/ka.wav");
+  wa_sound = loadSound("assets/wa.wav");
+  ka_sound = loadSound("assets/ka.wav");
   eat_power = loadSound("assets/eat_power.wav")
   pacman_death = loadSound("assets/pacman_death.wav")
   ghost_death = loadSound("assets/ghost_death.wav")
@@ -204,10 +210,12 @@ function setupGhost(character) {
 }
 
 function characterLogic() {
+  let localPacmanExists = false;
   for (let i = 0; i < guests.length; i++) {
     const p = guests[i];
     // pacman logic
     if (p.character===`pacman`) {
+      localPacmanExists = true;
       image(images[p.character][p.state][p.facing],p.x-11,p.y-11);
       // kills self if close enough to ghost
       if (((me.x-p.x<=8 && me.x-p.x>=-8) && (me.y-p.y<=8 && me.y-p.y>=-8)) && me.character!==`pacman` && !shared.powered && me.alive===true) {
@@ -244,6 +252,9 @@ function characterLogic() {
     }
   }
   // pacman left or died? end the game
+  if (!localPacmanExists) {
+    shared.pacmanExists=false;
+  }
   if (!shared.pacmanExists) {
     endGame()
   }
@@ -253,34 +264,34 @@ function gridLogic() {
   let foodCount = 0;
   image(images.pacmap,0,0,width,height);
   // 2d array loop
-  for (let y=0;y<31;y++) {
-    for (let x=0;x<28;x++) {
+  for (let y=0;y<GRID_HEIGHT;y++) {
+    for (let x=0;x<GRID_WIDTH;x++) {
       // food space logic
       if (shared.grid[y][x] === "F") {
-        image(images.pellet,x*8+3,y*8+3);
+        image(images.pellet,x*GRID_SIZE+3,y*GRID_SIZE+3);
         foodCount+=1
-        if (me.character === 'pacman' && (me.x+1)%8 === 0 && (me.y+1)%8 === 0 && (shared.grid[(me.y+1)/8-1][(me.x+1)/8-1]==="F")) {
-          shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] = "E"
+        if (me.character === 'pacman' && (me.x+1)%GRID_SIZE === 0 && (me.y+1)%GRID_SIZE === 0 && (shared.grid[(me.y+1)/GRID_SIZE-1][(me.x+1)/GRID_SIZE-1]==="F")) {
+          shared.grid[(me.y+1)/GRID_SIZE-1][(me.x+1)/GRID_SIZE-1] = "E"
           if (soundCounter) {
             soundCounter=!soundCounter
-            wa.play();
+            wa_sound.play();
           }
           else {
             soundCounter=!soundCounter
-            ka.play();
+            ka_sound.play();
           }
         }
       }
       // power pellet space logic 
       else if (shared.grid[y][x] === "P") {
-        image(images.power_pellet,x*8,y*8);
+        image(images.power_pellet,x*GRID_SIZE,y*GRID_SIZE);
         foodCount+=1
       }
-      if (me.character === 'pacman' && (me.x+1)%8 === 0 && (me.y+1)%8 === 0) {
+      if (me.character === 'pacman' && (me.x+1)%GRID_SIZE === 0 && (me.y+1)%GRID_SIZE === 0) {
         // power pellet eating logic
-        if (shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] === "P") {
+        if (shared.grid[(me.y+1)/GRID_SIZE-1][(me.x+1)/GRID_SIZE-1] === "P") {
           shared.powered = true;
-          shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] = "E";
+          shared.grid[(me.y+1)/GRID_SIZE-1][(me.x+1)/GRID_SIZE-1] = "E";
           eat_power.play()
           if (powerTimer) {
             clearTimeout(powerTimer);
@@ -289,7 +300,7 @@ function gridLogic() {
           powerTimer = setTimeout(() => {
             shared.powered = false;
             powerTimer = null;
-          }, 10000);
+          }, POWER_PELLET_DURATION);
         }
       }
     }
@@ -302,57 +313,60 @@ function gridLogic() {
 
 function endGame() {
   pacman_death.play()
-  // to not affect game while in menu
-  me.x=111;
-  me.y=119;
-  me.character=`shadow`
-  // reset variables
-  me.alive=true;
-  shared.powered=false;
-  me.started=false;
   shared.pacmanExists=false;
-  // reset grid
+      // reset grid
   shared.grid=lines.map((line) => Array.from(line));
+  for (let i = 0; i < guests.length; i++) {
+    const p = guests[i];
+    // to not affect game while in menu
+    p.x=111;
+    p.y=119;
+    p.character=`shadow`
+    // reset variables
+    p.alive=true;
+    shared.powered=false;
+    p.started=false;
+  }
 }
 
 function moveCharacter() {
   let moved=false;
   // logic to change direction with queue
-  if (faceQueue===`up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`) && (me.x+1)%8===0) {
+  if (faceQueue===`up` && !(shared.grid[Math.floor(me.y/GRID_SIZE-1)][Math.floor(me.x/GRID_SIZE)]===`W`) && (me.x+1)%GRID_SIZE===0) {
     me.facing=`up`;
   }
-  else if (faceQueue===`left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`) && (me.y+1)%8===0) {
+  else if (faceQueue===`left` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE-1)]===`W`) && (me.y+1)%GRID_SIZE===0) {
     me.facing=`left`;
   }
-  else if (faceQueue===`down` && !(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`W`) && (me.x+1)%8===0) {
+  else if (faceQueue===`down` && !(shared.grid[Math.floor(me.y/GRID_SIZE+1)][Math.floor(me.x/GRID_SIZE)]===`W`) && (me.x+1)%GRID_SIZE===0) {
     me.facing=`down`;
   }
-  else if (faceQueue===`right` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`W`) && (me.y+1)%8===0) {
+  else if (faceQueue===`right` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE+1)]===`W`) && (me.y+1)%GRID_SIZE===0) {
     me.facing=`right`;
   }
   // logic to actually move and stop when hitting a wall
-  if (me.facing === `up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
+  if (me.facing === `up` && !(shared.grid[Math.floor(me.y/GRID_SIZE-1)][Math.floor(me.x/GRID_SIZE)]===`W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE-1)][Math.floor(me.x/GRID_SIZE)]===`D`) || !(me.character===`pacman`))) {
     me.y-=1;
     moved=true;
   }
-  else if (me.facing === `left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`) && (!(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`D`) || !(me.character===`pacman`))) {
+  else if (me.facing === `left` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE-1)]===`W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE-1)]===`D`) || !(me.character===`pacman`))) {
     me.x-=1;
     moved=true;
   }
-  else if (me.facing === `down` && !(shared.grid[Math.floor((me.y+1)/8)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
+  else if (me.facing === `down` && !(shared.grid[Math.floor((me.y+1)/GRID_SIZE)][Math.floor(me.x/GRID_SIZE)]===`W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE+1)][Math.floor(me.x/GRID_SIZE)]===`D`) || !(me.character===`pacman`))) {
     me.y+=1;
     moved=true;
   }
-  else if (me.facing === `right` && !(shared.grid[Math.floor(me.y/8)][Math.floor((me.x+1)/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`D`) || !(me.character===`pacman`))) {
+  else if (me.facing === `right` && !(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor((me.x+1)/GRID_SIZE)]===`W`) && (!(shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE+1)]===`D`) || !(me.character===`pacman`))) {
     me.x+=1;
     moved=true;
   }
   // portal logic
-  if (me.x>width+8) {
-    me.x=-8;
+  if (me.x>width+GRID_SIZE) {
+    me.x=-GRID_SIZE;
   }
-  else if (me.x<-8) {
-    me.x=width+8;
+  else if (me.x<-GRID_SIZE) {
+    me.x=width+GRID_SIZE;
   }
   // pacman opening and closing mouth logic
   if (frameCount%4===0 && moved===true && me.character===`pacman`) {
@@ -363,7 +377,7 @@ function moveCharacter() {
     }
   }
   // ghost respawn logic
-  if (!me.alive && me.character !== 'pacman' && shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8)] === "D") {
+  if (!me.alive && me.character !== 'pacman' && shared.grid[Math.floor(me.y/GRID_SIZE)][Math.floor(me.x/GRID_SIZE)] === "D") {
     me.alive = true;
   }
 }
