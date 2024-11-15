@@ -15,8 +15,14 @@ let pacman;
 let shadow;
 let speedy;
 let faceQueue;
+let wa;
+let ka;
+let pacman_death;
+let ghost_death;
+let eat_power;
+let soundCounter;
 
-let powerTimer
+let powerTimer;
 
 function preload() {
   partyConnect("wss://demoserver.p5party.org", "albertpacman");
@@ -24,6 +30,12 @@ function preload() {
   me = partyLoadMyShared();
   guests = partyLoadGuestShareds();
   lines = loadStrings("1.txt");
+  wa = loadSound("assets/wa.wav");
+  ka = loadSound("assets/ka.wav");
+  eat_power = loadSound("assets/eat_power.wav")
+  pacman_death = loadSound("assets/pacman_death.wav")
+  ghost_death = loadSound("assets/ghost_death.wav")
+
   images = {
     pacmap: loadImage("assets/pacmap.png"),
     pacman: {
@@ -84,9 +96,9 @@ function setup() {
   createCanvas(224, 248);
   // 28x31 or 224x248
   me.started=false;
-  me.alive=true
+  me.alive=true;
   if (partyIsHost()) {
-    shared.powered=false
+    shared.powered=false;
     shared.pacmanExists=false;
     shared.grid=lines.map((line) => Array.from(line));
   }
@@ -111,7 +123,7 @@ function chooseCharacter() {
   background(0);
   noSmooth();
   if (!shared.pacmanExists) {
-    text('You are pacman! Click enter.',width/2,height/3);
+    text('You are pacman! Click anywhere.',width/2,height/3);
     image(images.pacman.closed.right,width/2-32,height/2,32,32);
   }
   else {
@@ -124,17 +136,6 @@ function chooseCharacter() {
 }
 
 function keyPressed() {
-  if (!me.started && key==="Enter" && !shared.pacmanExists) {
-    shared.pacmanExists=true;
-    me.character=`pacman`;
-    faceQueue=`right`;
-    me.facing=`right`;
-    me.state=`open`;
-    me.x=111;
-    me.y=191;
-    me.started = true;
-  }
-
   if (me.started === true) {
     if (key==="w") {
       faceQueue=`up`;
@@ -152,6 +153,16 @@ function keyPressed() {
 }
 
 function mouseClicked() {
+  if (!me.started && !shared.pacmanExists) {
+    shared.pacmanExists=true;
+    me.character=`pacman`;
+    faceQueue=`right`;
+    me.facing=`right`;
+    me.state=`open`;
+    me.x=111;
+    me.y=191;
+    me.started = true;
+  }
   if (!me.started && shared.pacmanExists) {
     if (mouseY >= height/2 && mouseY <= height/2 + 32) {
       if (mouseX >= width/2-56 && mouseX <= width/2-24) {
@@ -170,7 +181,7 @@ function mouseClicked() {
   }
 }
 function setupGhost(character) {
-  me.character=character
+  me.character=character;
   faceQueue = 'up';
   me.facing = 'up';
   me.x = 111;
@@ -204,8 +215,9 @@ function characterLogic() {
           else {
             image(images[`dead`][p.facing],p.x-11,p.y-11);
           }
-        if (((me.x-p.x<=8 && me.x-p.x>=-8) && (me.y-p.y<=8 && me.y-p.y>=-8)) && me.character==`pacman` && shared.powered) {
+        if (((me.x-p.x<=8 && me.x-p.x>=-8) && (me.y-p.y<=8 && me.y-p.y>=-8)) && me.character==`pacman` && shared.powered && p.alive) {
           p.alive=false
+          ghost_death.play()
         }
       }
     }
@@ -224,8 +236,16 @@ function gridLogic() {
       if (shared.grid[y][x] === "F") {
         square(x*8+3,y*8+3,3);
         foodCount+=1
-        if (me.character === 'pacman' && (me.x+1)%8 === 0 && (me.y+1)%8 === 0) {
+        if (me.character === 'pacman' && (me.x+1)%8 === 0 && (me.y+1)%8 === 0 && (shared.grid[(me.y+1)/8-1][(me.x+1)/8-1]==="F")) {
           shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] = "E"
+          if (soundCounter) {
+            soundCounter=!soundCounter
+            wa.play();
+          }
+          else {
+            soundCounter=!soundCounter
+            ka.play();
+          }
         }
       }
       else if (shared.grid[y][x] === "P") {
@@ -236,7 +256,7 @@ function gridLogic() {
         if (shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] === "P") {
           shared.powered = true;
           shared.grid[(me.y+1)/8-1][(me.x+1)/8-1] = "E";
-          
+          eat_power.play()
           if (powerTimer) {
             clearTimeout(powerTimer);
           }
@@ -250,20 +270,24 @@ function gridLogic() {
     }
   }
   if (foodCount===0 || !shared.pacmanExists) {
-    endGame()
+    endGame();
   }
 }
 
 function endGame() {
-  me.alive=true
+  pacman_death.play()
+  me.x=111;
+  me.y=119;
+  me.character=`shadow`
+  me.alive=true;
   shared.powered=false;
-  me.started=false
+  me.started=false;
   shared.pacmanExists=false;
   shared.grid=lines.map((line) => Array.from(line));
 }
 
 function moveCharacter() {
-  let moved=false
+  let moved=false;
   if (faceQueue===`up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`) && (me.x+1)%8===0) {
     me.facing=`up`;
   }
@@ -279,19 +303,19 @@ function moveCharacter() {
   if (me.character===`pacman`||!shared.powered||frameCount%2===0)
   if (me.facing === `up` && !(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8-1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
     me.y-=1;
-    moved=true
+    moved=true;
   }
   else if (me.facing === `left` && !(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`W`) && (!(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8-1)]===`D`) || !(me.character===`pacman`))) {
     me.x-=1;
-    moved=true
+    moved=true;
   }
   else if (me.facing === `down` && !(shared.grid[Math.floor((me.y+1)/8)][Math.floor(me.x/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8+1)][Math.floor(me.x/8)]===`D`) || !(me.character===`pacman`))) {
     me.y+=1;
-    moved=true
+    moved=true;
   }
   else if (me.facing === `right` && !(shared.grid[Math.floor(me.y/8)][Math.floor((me.x+1)/8)]===`W`) && (!(shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8+1)]===`D`) || !(me.character===`pacman`))) {
     me.x+=1;
-    moved=true
+    moved=true;
   }
   if (me.x>width+8) {
     me.x=-8;
@@ -301,9 +325,9 @@ function moveCharacter() {
   }
   if (frameCount%4===0 && moved===true && me.character===`pacman`) {
     if (me.state===`open`)
-      me.state=`closed`
+      me.state=`closed`;
     else {
-      me.state=`open`
+      me.state=`open`;
     }
   }
   if (!me.alive && me.character !== 'pacman' && shared.grid[Math.floor(me.y/8)][Math.floor(me.x/8)] === "D") {
