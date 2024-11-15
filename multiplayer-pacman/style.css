@@ -1,15 +1,12 @@
-html,body {
-  margin: 0;
-  padding: 0;
+html, body {
+  display: flex;
+  justify-content: center;
+  background: #000;
 }
 
-/* body {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%,-50%);
-} */
-
 canvas {
-  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  height: 95vh !important;
+  width: auto !important;
 }
