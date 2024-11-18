@@ -11,6 +11,7 @@
 - [ten-rotate](ten-rotate)
 - [walker oop](walker-oop)
 - [walker oop array](walker-oop-array)
+- [fireworks oop](fireworks-oop)
 
 ## projects
 - [Interactive Scene](interactivescene)
