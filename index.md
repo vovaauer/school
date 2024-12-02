@@ -14,6 +14,7 @@
 - [fireworks oop](fireworks-oop)
 - [connected nodes oop](connected-nodes-oop)
 - [collide 2d](collide-2d)
+- [local storage](local-storage)
 
 ## projects
 - [Interactive Scene](interactivescene)
