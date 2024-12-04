@@ -15,6 +15,7 @@
 - [connected nodes oop](connected-nodes-oop)
 - [collide 2d](collide-2d)
 - [local storage](local-storage)
+- [inheritance](inheritance)
 
 ## projects
 - [Interactive Scene](interactivescene)
