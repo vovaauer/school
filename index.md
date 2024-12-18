@@ -17,6 +17,7 @@
 - [local storage](local-storage)
 - [inheritance](inheritance)
 - [fractal circles](fractal-circles)
+- [fractal triangle](fractal-triangle)
 
 ## projects
 - [Interactive Scene](interactivescene)
