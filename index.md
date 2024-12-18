@@ -16,6 +16,7 @@
 - [collide 2d](collide-2d)
 - [local storage](local-storage)
 - [inheritance](inheritance)
+- [fractal circles](fractal-circles)
 
 ## projects
 - [Interactive Scene](interactivescene)
