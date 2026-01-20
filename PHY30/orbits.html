@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbital Mechanics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a2e;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            color: #333;
+        }
+
+        #canvas {
+            display: block;
+            cursor: grab;
+        }
+
+        #canvas:active {
+            cursor: grabbing;
+        }
+
+        .panel {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        #controls {
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        #velocity-slider {
+            width: 250px;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #e0e0e0;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        #velocity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4a6fa5;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        #velocity-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        #velocity-slider:disabled {
+            opacity: 0.8;
+        }
+
+        #velocity-display {
+            font-size: 14px;
+            color: #4a6fa5;
+            font-weight: 600;
+            min-width: 90px;
+            text-align: right;
+        }
+
+        #delta-v-display {
+            font-size: 12px;
+            color: #666;
+            min-width: 80px;
+        }
+
+        #launch-btn {
+            padding: 12px 32px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            min-width: 120px;
+        }
+
+        #launch-btn:hover {
+            background: #3d5d8a;
+        }
+
+        #launch-btn.burn {
+            background: #5cb85c;
+        }
+        #launch-btn.burn:hover {
+            background: #4cae4c;
+        }
+
+        #launch-btn.cancel {
+            background: #d9534f;
+        }
+        #launch-btn.cancel:hover {
+            background: #c9302c;
+        }
+
+        #info {
+            top: 20px;
+            left: 20px;
+            width: 240px;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.6;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        #info .stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        #info .value {
+            color: #4a6fa5;
+            font-weight: 600;
+        }
+
+        #tut-popup {
+            position: absolute;
+            background: #4a6fa5;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: none;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        #tut-popup::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #4a6fa5;
+        }
+
+        #status {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            color: #333;
+            text-align: center;
+        }
+
+        #status.show { opacity: 1; }
+
+        #stage-title {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: rgba(255,255,255,0.9);
+            font-size: 18px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: right;
+            pointer-events: none;
+        }
+        
+        #stage-subtitle {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        #completion-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 2000;
+            min-width: 300px;
+        }
+
+        #completion-overlay h2 {
+            margin-bottom: 10px;
+            color: #1a1a2e;
+        }
+
+        #completion-overlay p {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        #next-btn {
+            padding: 12px 40px;
+            background: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #next-btn:hover {
+            background: #4cae4c;
+        }
+
+        .marker-label {
+            position: absolute;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            white-space: nowrap;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div id="stage-title">
+        Stage 1: Basic Orbit
+        <div id="stage-subtitle">Achieve a stable orbit around Earth</div>
+    </div>
+
+    <div class="panel" id="info">
+        <div class="stat"><span>Speed</span> <span class="value"><span id="vel">0</span> m/s</span></div>
+        <div class="stat"><span>Altitude</span> <span class="value"><span id="alt">400</span> km</span></div>
+        <div class="stat"><span>Apogee</span> <span class="value"><span id="apogee">0</span> km</span></div>
+        <div class="stat"><span>Perigee</span> <span class="value"><span id="perigee">0</span> km</span></div>
+    </div>
+
+    <div id="tut-popup"></div>
+    <div id="marker-container"></div>
+
+    <div class="panel" id="controls">
+        <div id="delta-v-display">Δv: 0 m/s</div>
+        <input type="range" id="velocity-slider" min="0" max="1000" value="0" step="1">
+        <span id="velocity-display">0 m/s</span>
+        <button id="launch-btn">Launch</button>
+    </div>
+
+    <div id="completion-overlay">
+        <h2 id="comp-title">Stage Complete!</h2>
+        <p id="comp-msg">You've reached a stable orbit.</p>
+        <button id="next-btn">Next Stage</button>
+    </div>
+
+    <div id="status"></div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const markerContainer = document.getElementById('marker-container');
+
+        // CONSTANTS & CONFIG
+
+        const G = 6.67430e-11;
+        const M_EARTH = 5.972e24;
+        const R_EARTH = 6.371e6;
+        const GM = G * M_EARTH;
+        
+        // Moon constants
+        const M_MOON = 7.347e22;
+        const R_MOON = 1.737e6;
+        const D_MOON = 384.4e6; 
+        const GM_MOON = G * M_MOON;
+        const SOI_MOON = D_MOON * Math.pow(M_MOON / M_EARTH, 0.4); // ~66,000 km
+
+        const STAGES = {
+            1: {
+                title: "Stage 1: Basic Orbit",
+                subtitle: "Achieve a stable circular orbit",
+                startAlt: 400000,
+                targetAlt: 400000,
+                tolerance: 0.15
+            },
+            2: {
+                title: "Stage 2: Hohmann Transfer",
+                subtitle: "Transfer to a higher orbit (Geostationary)",
+                startAlt: 400000,
+                targetAlt: 35786000, // GEO
+                tolerance: 0.05 // Precise target
+            },
+            3: {
+                title: "Stage 3: Lunar Trans-Injection",
+                subtitle: "Send the satellite to the Moon",
+                startAlt: 400000,
+                targetBody: 'MOON'
+            }
+        };
+
+        // STATE
+
+        let currentStage = 1;
+        let state = 'IDLE'; // IDLE, RUNNING, PAUSED (for stage 2), CRASH, ORBIT, ESCAPE, LOST, SUCCESS
+        let subState = 0;   // For multistep stages (0: launch, 1: transfer burn, 2: circularize)
+        
+        // Physics objects
+        let sat = { x: 0, y: 0, vx: 0, vy: 0, color: '#ffd700' };
+        let moon = { angle: 0, x: 0, y: 0, vx: 0, vy: 0 };
+        let trail = [];
+        
+        // View
+        let view = { x: 0, y: 0, zoom: 1 };
+        let isDragging = false, dragStart = {x:0,y:0}, viewStart = {x:0,y:0};
+        
+        // Logic
+        let sliderVal = 0; // The additive velocity from slider (Delta V)
+        let currentOrbitV = 0; // Base velocity before adding slider
+        let totalAngle = 0, lastAngle = 0;
+        let maxR = 0; // To track apogee reach
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+
+        // INITIALIZATION
+
+        function initStage(stageNum) {
+            currentStage = stageNum;
+            state = 'IDLE';
+            subState = 0;
+            trail = [];
+            totalAngle = 0;
+            maxR = 0;
+            
+            const cfg = STAGES[currentStage];
+            document.getElementById('stage-title').innerHTML = `${cfg.title}<div id="stage-subtitle">${cfg.subtitle}</div>`;
+            document.getElementById('completion-overlay').style.display = 'none';
+            document.getElementById('status').className = '';
+            
+            // Setup Satellite
+            const r = R_EARTH + cfg.startAlt;
+            
+            // Start at x=0, y=r (Top of earth)
+            sat.x = 0;
+            sat.y = r;
+            
+            // Calculate starting angle for tracking
+            lastAngle = Math.atan2(sat.y, sat.x);
+
+            // Circular orbit velocity: v = sqrt(GM/r)
+            const vCirc = Math.sqrt(GM / r);
+            currentOrbitV = vCirc;
+            
+            if (stageNum === 1) {
+                // Start at 5000m/s
+                sat.vx = 5000; 
+                sat.vy = 0;
+            } else {
+                sat.vx = vCirc;
+                sat.vy = 0;
+            }
+
+            // Setup Moon
+            moon.angle = -Math.PI / 4; 
+            if (stageNum === 3) {
+                 moon.angle = Math.PI + (70 * Math.PI/180);
+            }
+            updateMoonPos();
+
+            resetControls();
+            
+            // Camera
+            if (stageNum === 1) view.zoom = 0.8;
+            else if (stageNum === 2) view.zoom = 0.15;
+            else view.zoom = 0.05;
+            
+            view.x = 0; 
+            view.y = canvas.height * 0.1; 
+
+            updateTutorial();
+        }
+
+        function resetControls() {
+            const slider = document.getElementById('velocity-slider');
+            const btn = document.getElementById('launch-btn');
+            
+            slider.disabled = false;
+            btn.disabled = false;
+
+            if (state === 'RUNNING') {
+                btn.textContent = 'Cancel';
+                btn.className = 'cancel';
+                slider.disabled = true;
+            } else if (state === 'IDLE' || state === 'PAUSED') {
+                btn.textContent = 'Burn';
+                btn.className = 'burn';
+            } else if (['CRASH', 'LOST', 'ESCAPE', 'SUCCESS'].includes(state)) {
+                btn.textContent = 'Reset';
+                btn.className = 'cancel';
+            }
+            
+            if (currentStage === 1) {
+                if (state === 'IDLE') {
+                    slider.min = 5000;
+                    slider.max = 9000;
+                    slider.value = 5000;
+                    sliderVal = 5000;
+                }
+            } else if (currentStage === 2) {
+                if (subState === 0) {
+                    slider.min = 0;
+                    slider.max = 3000;
+                    slider.value = 0;
+                } else {
+                    slider.min = 0;
+                    slider.max = 2000;
+                    slider.value = 0;
+                }
+                sliderVal = parseInt(slider.value);
+            } else if (currentStage === 3) {
+                slider.min = 0;
+                slider.max = 4000;
+                slider.value = 0;
+                sliderVal = parseInt(slider.value);
+            }
+            
+            updateDisplays();
+        }
+
+
+        // PHYSICS ENGINE
+
+        function updateMoonPos(dt = 0) {
+            // Moon orbital period T = 2*pi*sqrt(a^3/GM)
+            const T = 2 * Math.PI * Math.sqrt(Math.pow(D_MOON, 3) / GM);
+            const w = 2 * Math.PI / T;
+            moon.angle += w * dt;
+            
+            moon.x = D_MOON * Math.cos(moon.angle);
+            moon.y = D_MOON * Math.sin(moon.angle);
+            
+            moon.vx = -D_MOON * w * Math.sin(moon.angle);
+            moon.vy = D_MOON * w * Math.cos(moon.angle);
+        }
+
+        function getGravity(x, y, mVals) {
+            let ax = 0, ay = 0;
+            
+            // Earth
+            const r2 = x*x + y*y;
+            const r = Math.sqrt(r2);
+            const aE = GM / r2;
+            ax -= aE * (x/r);
+            ay -= aE * (y/r);
+            
+            // Moon (Only in stage 3)
+            if (currentStage === 3) {
+                const dx = x - moon.x;
+                const dy = y - moon.y;
+                const rM2 = dx*dx + dy*dy;
+                const rM = Math.sqrt(rM2);
+                const aM = GM_MOON / rM2;
+                ax -= aM * (dx/rM);
+                ay -= aM * (dy/rM);
+            }
+            
+            return { ax, ay };
+        }
+
+        function update(dt) {
+            if (state !== 'RUNNING') return;
+
+            // Simple symplectic Euler or Verlet
+            // Update Moon
+            updateMoonPos(dt);
+
+            const r = Math.sqrt(sat.x*sat.x + sat.y*sat.y);
+            
+            // Collision Check
+            if (r < R_EARTH) {
+                state = 'CRASH';
+                onFailure();
+                return;
+            }
+
+            // Gravity
+            const g1 = getGravity(sat.x, sat.y);
+            
+            // Integration
+            sat.vx += g1.ax * dt;
+            sat.vy += g1.ay * dt;
+            sat.x += sat.vx * dt;
+            sat.y += sat.vy * dt;
+
+            // Track Angle
+            const angle = Math.atan2(sat.y, sat.x);
+            let dAngle = angle - lastAngle;
+            if (dAngle > Math.PI) dAngle -= 2 * Math.PI;
+            if (dAngle < -Math.PI) dAngle += 2 * Math.PI;
+            totalAngle += dAngle;
+            lastAngle = angle;
+
+            // Trail
+            if (trail.length === 0 || Math.hypot(trail[trail.length-1].x - sat.x, trail[trail.length-1].y - sat.y) > R_EARTH * 0.1) {
+                trail.push({x: sat.x, y: sat.y});
+                if (trail.length > 500) trail.shift();
+            }
+
+            checkGoals();
+        }
+
+        function onFailure() {
+            resetControls();
+            updateTutorial();
+        }
+
+        function checkGoals() {
+            const r = Math.sqrt(sat.x*sat.x + sat.y*sat.y);
+            const rvDot = sat.x*sat.vx + sat.y*sat.vy; // Radial velocity component
+            
+            if (currentStage === 1) {
+                const targetR = R_EARTH + STAGES[1].targetAlt;
+                const { a, e } = calculateOrbitalElements(sat.x, sat.y, sat.vx, sat.vy);
+                
+                // Track completion - trigger just after 1 full orbit
+                if (Math.abs(totalAngle) >= 2.0 * Math.PI) {
+                    // Check if within target ring
+                    if (Math.abs(r - targetR) < targetR * STAGES[1].tolerance && e < 0.15) {
+                        success();
+                    }
+                }
+                
+                if (r > R_EARTH * 4 || (r < R_EARTH + 50000 && state === 'RUNNING')) {
+                    state = r < R_EARTH + 50000 ? 'CRASH' : 'ESCAPE';
+                    onFailure();
+                }
+            }
+            else if (currentStage === 2) {
+                const targetR = R_EARTH + STAGES[2].targetAlt;
+                
+                if (subState === 0) { // First Burn phase (Transfer)
+                    // Detect Apogee: rvDot goes from positive to negative
+                    if (rvDot < 0 && r > R_EARTH + 1000000) { 
+                        if (Math.abs(r - targetR) < targetR * STAGES[2].tolerance) {
+                            state = 'PAUSED';
+                            subState = 1;
+                            totalAngle = 0; 
+                            resetControls();
+                            updateTutorial();
+                        } else {
+                            state = 'LOST';
+                            onFailure();
+                        }
+                    }
+                    
+                    if (r > targetR * 2.0) {
+                        state = 'LOST';
+                        onFailure();
+                    }
+                } else if (subState === 1) { // Second Burn phase (Circularization)
+                    const { e, a } = calculateOrbitalElements(sat.x, sat.y, sat.vx, sat.vy);
+                    if (Math.abs(totalAngle) >= 2.0 * Math.PI) { 
+                        if (e < 0.1 && Math.abs(a - targetR) < targetR * STAGES[2].tolerance) {
+                            success();
+                        }
+                    }
+                }
+            }
+            else if (currentStage === 3) {
+                const dm = Math.hypot(sat.x - moon.x, sat.y - moon.y);
+                if (dm < SOI_MOON) {
+                    success();
+                }
+                if (r > D_MOON * 1.5) {
+                    state = 'LOST';
+                    onFailure();
+                }
+            }
+        }
+
+        function success() {
+            state = 'SUCCESS';
+            document.getElementById('comp-title').textContent = STAGES[currentStage].title + " Complete!";
+            document.getElementById('comp-msg').textContent = 
+                currentStage === 3 ? "You reached the Moon's Sphere of Influence!" : "Orbit established successfully.";
+            
+            document.getElementById('completion-overlay').style.display = 'block';
+            resetControls();
+        }
+
+
+        // ORBITAL MATH
+
+        function calculateOrbitalElements(x, y, vx, vy, centerM = M_EARTH) {
+            const mu = G * centerM;
+            const rSq = x*x + y*y;
+            const r = Math.sqrt(rSq);
+            const vSq = vx*vx + vy*vy;
+            const energy = vSq/2 - mu/r;
+            const a = -mu / (2 * energy);
+            
+            // Angular momentum
+            const h = x*vy - y*vx;
+            
+            // e vector
+            const ex = (1/mu) * ((vSq - mu/r)*x - (x*vx + y*vy)*vx);
+            const ey = (1/mu) * ((vSq - mu/r)*y - (x*vx + y*vy)*vy);
+            const e = Math.sqrt(ex*ex + ey*ey);
+            const omega = Math.atan2(ey, ex);
+            
+            return { a, e, r, v: Math.sqrt(vSq), omega };
+        }
+
+        // Prediction for current slider value
+        function predictOrbit() {
+            let sx = sat.x, sy = sat.y;
+            let svx = sat.vx, svy = sat.vy;
+            
+            // Apply potential burn
+            if (state === 'IDLE' || state === 'PAUSED') {
+                const vMag = Math.sqrt(svx*svx + svy*svy);
+                if (vMag > 0 || currentStage === 1) {
+                    const vDirX = currentStage === 1 ? 1 : svx / vMag;
+                    const vDirY = currentStage === 1 ? 0 : svy / vMag;
+                    
+                    if (currentStage === 1 && state === 'IDLE') {
+                        svx = sliderVal;
+                        svy = 0;
+                    } else {
+                        svx += vDirX * sliderVal;
+                        svy += vDirY * sliderVal;
+                    }
+                }
+            } else {
+                return null; 
+            }
+
+            if (currentStage === 3) {
+                // Integration for Moon, High precision Semi-implicit Euler
+                const points = [];
+                let mx = moon.x, my = moon.y, mangle = moon.angle;
+                let moonIntercept = false;
+                let interceptMoonPos = {x:0, y:0};
+                
+                const steps = 40000; 
+                const dt = 15;     
+                let simX = sx, simY = sy, simVx = svx, simVy = svy;
+
+                const T = 2 * Math.PI * Math.sqrt(Math.pow(D_MOON, 3) / GM);
+                const w = 2 * Math.PI / T;
+
+                for (let i = 0; i < steps; i++) {
+                    // Update Moon Pos
+                    mangle += w * dt;
+                    mx = D_MOON * Math.cos(mangle);
+                    my = D_MOON * Math.sin(mangle);
+
+                    // Gravity Calculation
+                    const r2 = simX*simX + simY*simY;
+                    const r = Math.sqrt(r2);
+                    if (r < R_EARTH) break;
+
+                    let ax = -(GM/r2) * (simX/r);
+                    let ay = -(GM/r2) * (simY/r);
+                    
+                    const dx = simX - mx;
+                    const dy = simY - my;
+                    const rM2 = dx*dx + dy*dy;
+                    const rM = Math.sqrt(rM2);
+                    
+                    if (rM < SOI_MOON) { 
+                        moonIntercept = true; 
+                        interceptMoonPos = {x: mx, y: my};
+                        points.push({x:simX, y:simY, intercept:true}); 
+                        break; 
+                    }
+
+                    const aM = GM_MOON / rM2;
+                    ax -= aM * (dx/rM);
+                    ay -= aM * (dy/rM);
+
+                    // Semi-implicit Euler (Velocity THEN Position)
+                    simVx += ax * dt;
+                    simVy += ay * dt;
+                    simX += simVx * dt;
+                    simY += simVy * dt;
+
+                    if (i % 100 === 0) points.push({x: simX, y: simY});
+                }
+                return { points, moonIntercept, interceptMoonPos, type: 'points' };
+            } else {
+                const orb = calculateOrbitalElements(sx, sy, svx, svy);
+                const { a, e } = orb;
+                if (isNaN(a)) return null;
+
+                const periapsis = a * (1 - e);
+                const crash = periapsis < R_EARTH;
+                
+                if (e >= 1 || a < 0) { 
+                     const points = [];
+                     let simX = sx, simY = sy, simVx = svx, simVy = svy;
+                     const dt = 100;
+                     for(let i=0; i<1000; i++) {
+                         const r2 = simX*simX + simY*simY;
+                         const r = Math.sqrt(r2);
+                         if (r < R_EARTH || r > R_EARTH * 20) break;
+                         const acc = GM/r2;
+                         simVx -= acc * (simX/r) * dt;
+                         simVy -= acc * (simY/r) * dt;
+                         simX += simVx*dt;
+                         simY += simVy*dt;
+                         if (i%5===0) points.push({x:simX, y:simY});
+                     }
+                     return { points, crash: false, type: 'points', isEscape: true };
+                }
+                return { orb, crash, type: 'ellipse' };
+            }
+        }
+
+
+        // RENDERING
+
+        function worldToScreen(x, y) {
+            const scale = (Math.min(canvas.width, canvas.height) * 0.2 / R_EARTH) * view.zoom;
+            return {
+                x: canvas.width/2 + view.x + x * scale,
+                y: canvas.height/2 + view.y - y * scale, 
+                scale
+            };
+        }
+
+        function drawPlanet(ctx, x, y, r, color1, color2, glow, ringColor) {
+            const s = worldToScreen(x, y);
+            const rad = r * s.scale;
+            if (rad < 0.5) return; 
+
+            if (glow) {
+                const g = ctx.createRadialGradient(s.x, s.y, rad, s.x, s.y, rad * 1.2);
+                g.addColorStop(0, glow);
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, rad*1.5, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            if (ringColor) {
+                ctx.strokeStyle = ringColor;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, rad * 1.5, 0, Math.PI*2);
+                ctx.stroke();
+            }
+
+            const g = ctx.createRadialGradient(s.x - rad*0.3, s.y - rad*0.3, 0, s.x, s.y, rad);
+            g.addColorStop(0, color1);
+            g.addColorStop(1, color2);
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, rad, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        function render() {
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Stars
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            for(let i=0; i<100; i++) {
+                const x = (i*12356 % canvas.width);
+                const y = (i*8321 % canvas.height);
+                ctx.fillRect(x,y,1,1);
+            }
+
+            // Target Orbit (Stage 1 & 2)
+            if (currentStage <= 2) {
+                const s = worldToScreen(0,0);
+                const targetAlt = STAGES[currentStage].targetAlt;
+                const rTarget = (R_EARTH + targetAlt) * s.scale;
+                const tol = STAGES[currentStage].tolerance;
+                
+                ctx.strokeStyle = 'rgba(100, 255, 100, 0.1)';
+                ctx.lineWidth = rTarget * tol * 2; 
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, rTarget, 0, Math.PI*2);
+                ctx.stroke();
+                
+                ctx.strokeStyle = 'rgba(100, 255, 100, 0.4)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5,5]);
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, rTarget, 0, Math.PI*2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Prediction
+            if ((state === 'IDLE' || state === 'PAUSED')) {
+                const pred = predictOrbit();
+                if (pred) {
+                    if (pred.type === 'points') {
+                        ctx.beginPath();
+                        const start = worldToScreen(pred.points[0].x, pred.points[0].y);
+                        ctx.moveTo(start.x, start.y);
+                        for(let p of pred.points) {
+                            const s = worldToScreen(p.x, p.y);
+                            ctx.lineTo(s.x, s.y);
+                        }
+                        ctx.strokeStyle = pred.moonIntercept ? '#5cb85c' : (pred.crash ? '#d9534f' : 'rgba(255,150,100,0.5)');
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([4,4]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        // Show moon intercept target position
+                        if (pred.moonIntercept && pred.interceptMoonPos) {
+                            const ms = worldToScreen(pred.interceptMoonPos.x, pred.interceptMoonPos.y);
+                            ctx.strokeStyle = '#5cb85c';
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([2,2]);
+                            ctx.beginPath();
+                            ctx.arc(ms.x, ms.y, SOI_MOON * ms.scale, 0, Math.PI*2);
+                            ctx.stroke();
+                            ctx.setLineDash([]);
+
+                            drawPlanet(ctx, pred.interceptMoonPos.x, pred.interceptMoonPos.y, R_MOON, 'rgba(92,184,92,0.3)', 'rgba(92,184,92,0.1)');
+                        }
+                    } else if (pred.type === 'ellipse') {
+                        ctx.beginPath();
+                        const steps = 100;
+                        const { a, e, omega } = pred.orb;
+                        const p = a * (1 - e*e); 
+                        
+                        for (let i=0; i<=steps; i++) {
+                            const theta = (i/steps) * 2 * Math.PI;
+                            const r = p / (1 + e * Math.cos(theta));
+                            const ex = r * Math.cos(theta + omega);
+                            const ey = r * Math.sin(theta + omega);
+                            const s = worldToScreen(ex, ey);
+                            if (i===0) ctx.moveTo(s.x, s.y);
+                            else ctx.lineTo(s.x, s.y);
+                        }
+                        ctx.strokeStyle = pred.crash ? '#d9534f' : 'rgba(100, 200, 100, 0.5)';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([4,4]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+            }
+
+            // SOI for Moon (Stage 3)
+            if (currentStage === 3) {
+                const ms = worldToScreen(moon.x, moon.y);
+                const rSOI = SOI_MOON * ms.scale;
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.05)';
+                ctx.beginPath();
+                ctx.arc(ms.x, ms.y, rSOI, 0, Math.PI*2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(200, 200, 200, 0.1)';
+                ctx.stroke();
+            }
+
+            // Earth
+            drawPlanet(ctx, 0, 0, R_EARTH, '#5b9bd5', '#1e3c5e', 'rgba(100, 150, 255, 0.2)');
+
+            // Moon
+            if (currentStage === 3) {
+                drawPlanet(ctx, moon.x, moon.y, R_MOON, '#ddd', '#888');
+            }
+
+            // Trail
+            if (trail.length > 0) {
+                ctx.beginPath();
+                const start = worldToScreen(trail[0].x, trail[0].y);
+                ctx.moveTo(start.x, start.y);
+                for(let p of trail) {
+                    const s = worldToScreen(p.x, p.y);
+                    ctx.lineTo(s.x, s.y);
+                }
+                ctx.strokeStyle = 'rgba(255, 200, 100, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Satellite
+            const satS = worldToScreen(sat.x, sat.y);
+            ctx.fillStyle = '#ffd700';
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(satS.x, satS.y, 4, 0, Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            updateMarkers();
+        }
+
+        function updateMarkers() {
+            markerContainer.innerHTML = '';
+            
+            if (['SUCCESS', 'RUNNING', 'PAUSED'].includes(state)) {
+                const orb = calculateOrbitalElements(sat.x, sat.y, sat.vx, sat.vy);
+                if (orb.e < 1 && orb.a > 0) { 
+                    const rMag = Math.sqrt(sat.x*sat.x + sat.y*sat.y);
+                    const vMag2 = sat.vx*sat.vx + sat.vy*sat.vy;
+                    const rvDot = sat.x*sat.vx + sat.y*sat.vy;
+                    
+                    const mu = GM;
+                    const ex = ((vMag2 - mu/rMag)*sat.x - rvDot*sat.vx) / mu;
+                    const ey = ((vMag2 - mu/rMag)*sat.y - rvDot*sat.vy) / mu;
+                    const eMag = Math.sqrt(ex*ex + ey*ey);
+                    
+                    if (eMag > 0.001) {
+                        const pDist = orb.a * (1 - orb.e);
+                        const aDist = orb.a * (1 + orb.e);
+                        
+                        const px = (ex/eMag) * pDist;
+                        const py = (ey/eMag) * pDist;
+                        const ax = -(ex/eMag) * aDist;
+                        const ay = -(ey/eMag) * aDist;
+                        
+                        addMarker('P', px, py);
+                        addMarker('A', ax, ay);
+                    }
+                }
+            }
+        }
+
+        function addMarker(text, x, y) {
+            const s = worldToScreen(x, y);
+            if (s.x < 0 || s.x > canvas.width || s.y < 0 || s.y > canvas.height) return;
+            
+            const div = document.createElement('div');
+            div.className = 'marker-label';
+            div.textContent = text;
+            div.style.left = s.x + 'px';
+            div.style.top = s.y + 'px';
+            markerContainer.appendChild(div);
+        }
+
+        function updateDisplays() {
+            const v = Math.sqrt(sat.vx*sat.vx + sat.vy*sat.vy);
+            const r = Math.sqrt(sat.x*sat.x + sat.y*sat.y);
+            const alt = (r - R_EARTH) / 1000;
+            
+            document.getElementById('vel').textContent = Math.round(v);
+            document.getElementById('alt').textContent = Math.round(alt);
+            
+            let label = "Burn: ";
+            let sign = "+ ";
+            if (currentStage === 1 && state === 'IDLE') {
+                label = "Target V: ";
+                sign = "";
+            }
+            
+            document.getElementById('velocity-display').textContent = sign + sliderVal + " m/s";
+            document.getElementById('delta-v-display').textContent = label;
+
+            const orb = calculateOrbitalElements(sat.x, sat.y, sat.vx, sat.vy);
+            const ap = (orb.a * (1 + orb.e) - R_EARTH) / 1000;
+            const pe = (orb.a * (1 - orb.e) - R_EARTH) / 1000;
+            
+            document.getElementById('apogee').textContent = (isNaN(ap) || orb.a < 0) ? '∞' : Math.round(ap);
+            document.getElementById('perigee').textContent = (isNaN(pe) || orb.a < 0) ? '-' : Math.round(pe);
+        }
+
+
+        // UI & INTERACTION
+
+        function updateTutorial() {
+            const popup = document.getElementById('tut-popup');
+            popup.style.display = 'none';
+
+            let msg = "";
+            let target = null;
+
+            if (state === 'IDLE' || state === 'PAUSED') {
+                 if (currentStage === 2) {
+                     if (subState === 0) {
+                         msg = "Increase velocity to raise your Apogee (A) to the green ring!";
+                         target = "velocity-slider";
+                     } else {
+                         msg = "Increase velocity at Apogee (A) to circularize!";
+                         target = "launch-btn";
+                     }
+                 } else if (currentStage === 1) {
+                     msg = "Adjust Target Velocity to achieve a stable orbit";
+                     target = "velocity-slider";
+                 } else if (currentStage === 3) {
+                     msg = "Send the satellite to the Moon's intercept area!";
+                     target = "launch-btn";
+                 } else {
+                     msg = "Ready to burn!";
+                     target = "launch-btn";
+                 }
+            } else if (state === 'RUNNING') {
+                // No message
+            } else if (['CRASH', 'LOST', 'ESCAPE'].includes(state)) {
+                msg = "Mission failed. Reset and try again.";
+                target = "launch-btn";
+            }
+
+            if (msg && target) {
+                const el = document.getElementById(target);
+                const rect = el.getBoundingClientRect();
+                popup.textContent = msg;
+                popup.style.display = 'block';
+                popup.style.left = (rect.left + rect.width/2) + 'px';
+                popup.style.top = (rect.top - 10) + 'px';
+                popup.style.transform = 'translate(-50%, -100%)';
+            }
+        }
+
+        document.getElementById('velocity-slider').addEventListener('input', (e) => {
+            sliderVal = parseInt(e.target.value);
+            updateDisplays();
+            updateTutorial();
+        });
+
+        document.getElementById('launch-btn').addEventListener('click', () => {
+            if (['RUNNING', 'SUCCESS', 'CRASH', 'LOST', 'ESCAPE'].includes(state)) {
+                initStage(currentStage);
+            } else {
+                // BURN
+                const vMag = Math.sqrt(sat.vx*sat.vx + sat.vy*sat.vy);
+                if (vMag > 0 || currentStage === 1) {
+                    const vDirX = currentStage === 1 ? 1 : sat.vx / vMag;
+                    const vDirY = currentStage === 1 ? 0 : sat.vy / vMag;
+                    
+                    if (currentStage === 1 && state === 'IDLE') {
+                         sat.vx = sliderVal;
+                         sat.vy = 0;
+                    } else {
+                         sat.vx += vDirX * sliderVal;
+                         sat.vy += vDirY * sliderVal;
+                    }
+                }
+                
+                state = 'RUNNING';
+                resetControls();
+                updateTutorial();
+            }
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (STAGES[currentStage + 1]) {
+                initStage(currentStage + 1);
+                document.getElementById('launch-btn').style.display = 'block';
+                document.getElementById('controls').style.opacity = 1;
+            } else {
+                alert("All stages complete! Thanks for playing.");
+            }
+        });
+
+        // Mouse View Controls
+        canvas.addEventListener('mousedown', e => {
+            isDragging = true;
+            dragStart = { x: e.clientX, y: e.clientY };
+            viewStart = { x: view.x, y: view.y };
+        });
+        window.addEventListener('mousemove', e => {
+            if (isDragging) {
+                view.x = viewStart.x + (e.clientX - dragStart.x);
+                view.y = viewStart.y + (e.clientY - dragStart.y); 
+            }
+        });
+        window.addEventListener('mouseup', () => isDragging = false);
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+            view.zoom *= factor;
+        }, {passive: false});
+
+
+        // Game Loop
+        let lastTime = performance.now();
+
+        function loop(now) {
+            let dt = (now - lastTime) / 1000;
+            lastTime = now;
+            
+            if (dt > 0.1) dt = 0.1; 
+
+            const ts = currentStage === 1 ? 1000 : (currentStage === 3 ? 20000 : 5000);
+            const steps = currentStage === 3 ? 100 : 30; // Increased S3 steps
+            
+            for(let i=0; i<steps; i++) {
+                update(dt * ts / steps);
+            }
+            
+            render();
+            updateDisplays();
+            
+            requestAnimationFrame(loop);
+        }
+
+        initStage(1);
+        requestAnimationFrame(loop);
+
+    </script>
+</body>
+</html>
